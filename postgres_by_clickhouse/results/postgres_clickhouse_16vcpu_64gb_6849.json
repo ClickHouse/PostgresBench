@@ -1,0 +1,56 @@
+{
+  "system": "Postgres by ClickHouse",
+  "date": "2026-02-12",
+  "machine": "16vCPU, 64GB RAM",
+  "cluster_size": 1,
+  "proprietary": "yes",
+  "tuned": "no",
+  "comment": "",
+  "tags": [
+    "PostgreSQL-compatible",
+    "OLTP",
+    "managed",
+    "aws"
+  ],
+  "benchmark": {
+    "tool": "pgbench",
+    "workload": "TPC-B (built-in)",
+    "scale_factor": 6849,
+    "clients": 256,
+    "threads": 16,
+    "duration_seconds": 600,
+    "query_mode": "prepared"
+  },
+  "load": {
+    "load_time_seconds": 683.852950855
+  },
+  "results": [
+    {
+      "run": 1,
+      "tps": 21854.180168,
+      "transactions": 13096475,
+      "failed_transactions": 0,
+      "latency_avg_ms": 11.696,
+      "latency_stddev_ms": 2.836,
+      "initial_connection_time_ms": 799.609
+    },
+    {
+      "run": 2,
+      "tps": 23514.11781,
+      "transactions": 14087096,
+      "failed_transactions": 0,
+      "latency_avg_ms": 10.876,
+      "latency_stddev_ms": 1.844,
+      "initial_connection_time_ms": 947.082
+    },
+    {
+      "run": 3,
+      "tps": 25299.586119,
+      "transactions": 15159478,
+      "failed_transactions": 0,
+      "latency_avg_ms": 10.106,
+      "latency_stddev_ms": 1.278,
+      "initial_connection_time_ms": 851.415
+    }
+  ]
+}

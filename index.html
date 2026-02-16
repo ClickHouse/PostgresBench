@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>OLTP-Bench — A Benchmark For Postgres-Compatible DBMS</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon"
+        href="data:image/gif;base64,R0lGODlhIAAgAOMPAHMUEmkyHOcbF8UvJts/E3BeOih1YziiQmebLt2AFjeyQKqZKNWPjLybfPfcDP///yH5BAEKAA8ALAAAAAAgACAAAATg8MlJ6ws26z0EGcQmZgAhnN6oPg0wDA0zrGMTAADDxEJCZ4Gba8c4hX4Uw+XWeYGOyMdhgkuYrAToqIBQHBCIKQ6wcJhPyINarUBcyuYE+ndQeOsKuNlxmv3CdnZfew5yAlEPC12BhFhZiBJ2CI1GkBMHeoV9PpYPhIUDBqIFnZ8EBaKplqYMqaqIewl8A6iupFF7C1YCoaJqq4UOWQIBBmtTuIQmWWxekJQeYWuWcFYPfl+dLAELOxML2hIYDeEWt7flEufknTZB7+8NBeyINxjqDwU4QYg26BTu6KVTEQEAOw==">
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color: black;
+            --title-color: black;
+            --background-color: white;
+
+            --link-color: #08F;
+            --link-hover-color: #F40;
+            --hashed-link-lightness: 0.5;
+
+            --selector-text-color: black;
+            --selector-active-text-color: black;
+            --selector-background-color: #EEE;
+            --selector-active-background-color: #FFCB80;
+            --selector-passive-background-color: #EEDDCC;
+            --selector-hover-text-color: black;
+            --selector-hover-background-color: #FDB;
+
+            --summary-every-other-row-color: #F8F8F8;
+            --highlight-color: #EEE;
+
+            --bar-color1: oklch(calc(0.9 - 0.6) 0.1 calc(90 - 60));
+            --bar-color2: oklch(calc(0.9 - 0.4) 0.1 calc(90 - 40));
+            --bar-color3: oklch(calc(0.9 - 0.1) 0.1 calc(90 - 20));
+            --bar-color4: oklch(0.9 0.1 90);
+
+            --tooltip-text-color: white;
+            --tooltip-background-color: black;
+
+            --nothing-selected-color: #CCC;
+            --shadow-color: grey;
+        }
+
+        [data-theme="dark"] {
+            --color: #CCC;
+            --title-color: white;
+            --background-color: #04293A;
+
+            --link-color: #8CF;
+            --link-hover-color: #FFF;
+            --hashed-link-lightness: 0.82;
+
+            --selector-text-color: white;
+            --selector-background-color: #444;
+            --selector-active-text-color: white;
+            --selector-active-background-color: #088;
+            --selector-passive-background-color: #566;
+            --selector-hover-text-color: black;
+            --selector-hover-background-color: white;
+
+            --summary-every-other-row-color: #042e41;
+            --highlight-color: #064663;
+
+            --bar-color1: oklch(calc(0.4 + 0.6) 0.1 calc(250 - 180));
+            --bar-color2: oklch(calc(0.4 + 0.4) 0.1 calc(250 - 120));
+            --bar-color3: oklch(calc(0.4 + 0.2) 0.1 calc(250 - 60));
+            --bar-color4: oklch(0.4 0.1 250);
+
+            --tooltip-text-color: white;
+            --tooltip-background-color: #444;
+
+            --nothing-selected-color: #666;
+            --shadow-color: black;
+        }
+
+        html,
+        body {
+            color: var(--color);
+            background-color: var(--background-color);
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: auto;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 1% 3% 0 3%;
+        }
+
+        h1 {
+            color: var(--title-color);
+        }
+
+        table {
+            border-spacing: 1px;
+        }
+
+        .stick-left {
+            position: sticky;
+            left: 0px;
+        }
+
+        .selectors-container {
+            padding: 2rem 0 2rem 0;
+            user-select: none;
+        }
+
+        .selectors-container th {
+            text-align: left;
+            vertical-align: top;
+            white-space: nowrap;
+            padding-top: 0.5rem;
+            padding-right: 1rem;
+        }
+
+        .selector {
+            display: inline-block;
+            margin-left: 0.1rem;
+            padding: 0.2rem 0.5rem 0.2rem 0.5rem;
+            background: var(--selector-background-color);
+            color: var(--selector-text-color);
+            border: 0.2rem solid var(--background-color);
+            border-radius: 0.5rem;
+        }
+
+        .selector-active {
+            color: var(--selector-active-text-color);
+            background: var(--selector-active-background-color);
+        }
+
+        .selector-passive {
+            color: var(--selector-active-text-color);
+            background: var(--selector-passive-background-color);
+        }
+
+        a,
+        a:visited {
+            text-decoration: none;
+            color: var(--link-color);
+            cursor: pointer;
+        }
+
+        a:hover {
+            color: var(--link-hover-color);
+        }
+
+        .selector:hover {
+            color: var(--selector-hover-text-color) !important;
+            background: var(--selector-background-color);
+        }
+
+        .selector-active:hover,
+        .selector-passive:hover {
+            background: var(--selector-hover-background-color);
+        }
+
+        #summary tr:nth-child(odd) {
+            background: var(--summary-every-other-row-color);
+        }
+
+        .summary-name {
+            white-space: nowrap;
+            text-align: right;
+            padding-right: 1rem;
+        }
+
+        .summary-bar-cell {
+            width: 100%;
+        }
+
+        .summary-bar {
+            height: 1rem;
+            width: 100%;
+        }
+
+        .summary-number {
+            font-family: monospace;
+            text-align: right;
+            padding-left: 1rem;
+            white-space: nowrap;
+        }
+
+        th {
+            padding-bottom: 0.5rem;
+        }
+
+        .th-entry-hilite {
+            background: var(--highlight-color);
+            font-weight: bold;
+        }
+
+        .summary-row:hover,
+        .summary-row-hilite {
+            background: var(--highlight-color) !important;
+            font-weight: bold;
+        }
+
+        #details {
+            padding-bottom: 1rem;
+        }
+
+        #details th {
+            vertical-align: bottom;
+            white-space: pre;
+        }
+
+        #details td {
+            white-space: pre;
+            font-family: monospace;
+            text-align: right;
+            padding: 0.1rem 0.5rem 0.1rem 0.5rem;
+        }
+
+        .shadow:hover {
+            box-shadow: 0 0 1rem var(--shadow-color);
+            position: relative;
+        }
+
+        #nothing-selected {
+            display: none;
+            font-size: 32pt;
+            font-weight: bold;
+            color: var(--nothing-selected-color);
+        }
+
+        .note {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 0.5rem);
+            visibility: hidden;
+            background-color: var(--tooltip-background-color);
+            color: var(--tooltip-text-color);
+            box-shadow: 0 0 1rem var(--shadow-color);
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            z-index: 1;
+            text-align: left;
+            white-space: normal;
+        }
+
+        .tooltip-result {
+            left: calc(50% - 0.25rem);
+            width: 20rem;
+            margin-left: -10rem;
+        }
+
+        .tooltip-query {
+            left: 0;
+            width: 40rem;
+            margin-left: -3rem;
+        }
+
+        .note:hover .tooltip,
+        .note:active .tooltip {
+            visibility: visible;
+        }
+
+        .tooltip::after {
+            content: " ";
+            position: absolute;
+            top: 100%;
+            border-width: 0.5rem;
+            border-style: solid;
+            border-color: var(--tooltip-background-color) transparent transparent transparent;
+        }
+
+        .tooltip-result::after {
+            left: 50%;
+            margin-left: -1rem;
+        }
+
+        .tooltip-query::after {
+            left: 3rem;
+            margin-left: 0.5rem;
+        }
+
+        .nowrap {
+            text-wrap: none;
+        }
+
+        .themes {
+            float: right;
+            font-size: 200%;
+            cursor: pointer;
+        }
+
+        #toggle-dark,
+        #toggle-light {
+            padding-right: 0.5rem;
+            cursor: pointer;
+        }
+
+        #toggle-dark:hover,
+        #toggle-light:hover {
+            display: inline-block;
+            transform: translate(1px, 1px);
+            filter: brightness(125%);
+        }
+
+        #scale_hint {
+            font-weight: normal;
+            font-size: 80%;
+            filter: contrast(10%);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header stick-left">
+        <span class="nowrap themes"><span id="toggle-dark">🌚</span><span id="toggle-light">🌞</span></span>
+        <h1>OLTP-Bench — A Benchmark For Postgres-Compatible DBMS</h1>
+        <a href="https://github.com/ClickHouse/oltpBench/">Methodology</a> | <a href="https://github.com/ClickHouse/oltpBench/">Reproduce and Validate the Results</a> | <a href="https://github.com/ClickHouse/oltpBench/">Add a System</a> | See also: <a href="https://benchmark.clickhouse.com/">ClickBench</a>
+    </div>
+
+    <table class="selectors-container stick-left">
+        <tr>
+            <th>System: </th>
+            <td id="selectors_system">
+                <a id="select-all-systems" class="selector selector-active">All</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Type: </th>
+            <td id="selectors_type">
+                <a id="select-all-types" class="selector selector-active">All</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Machine: </th>
+            <td id="selectors_machine">
+                <a id="select-all-machines" class="selector selector-active">All</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Data size: </th>
+            <td id="selectors_data_size">
+                <a id="select-all-data-sizes" class="selector selector-active">All</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Open source: </th>
+            <td id="selectors_opensource">
+                <a id="selector-opensource-yes" class="selector selector-active">Yes</a>
+                <a id="selector-opensource-no" class="selector selector-active">No</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Metric: </th>
+            <td id="selectors_run">
+                <a class="selector selector-active" id="selector-metric-tps">TPS</a>
+                <a class="selector" id="selector-metric-latency_avg">Avg Latency</a>
+                <a class="selector" id="selector-metric-latency_stddev">Latency StdDev</a>
+                <a class="selector" id="selector-metric-failed_transactions">Failed Tx</a>
+                <a class="selector" id="selector-metric-load_time">Load Time</a>
+            </td>
+        </tr>
+    </table>
+
+    <table class="stick-left comparison">
+        <thead>
+            <tr>
+                <th class="summary-name">
+                    System &amp; Machine
+                </th>
+                <th colspan="2">
+                    <span id="metric-label">Transactions per second</span><br />
+                    <span id="scale_hint"></span>
+                </th>
+            </tr>
+        </thead>
+        <tbody id="summary">
+        </tbody>
+    </table>
+
+    <div id="nothing-selected" class="stick-left">Nothing selected</div>
+
+    <div class="stick-left comparison">
+        <h2>Detailed Comparison</h2>
+    </div>
+
+    <table id="details">
+        <thead>
+            <tr id="details_head">
+            </tr>
+        </thead>
+        <tbody id="details_body">
+        </tbody>
+    </table>
+
+    <script type="text/javascript" src="data.generated.js"></script>
+    <script type="text/javascript">
+
+        let selectors = {
+            "system": {},
+            "type": {},
+            "machine": {},
+            "data_size": {},
+            "opensource": { "yes": true, "no": true },
+            "metric": "tps",
+            "queries": [],
+        };
+
+        let theme = 'light';
+
+        function setTheme(new_theme) {
+            theme = new_theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            window.localStorage.setItem('theme', theme);
+            render();
+        }
+
+        document.getElementById('toggle-light').addEventListener('click', e => setTheme('light'));
+        document.getElementById('toggle-dark').addEventListener('click', e => setTheme('dark'));
+
+        let new_theme = window.localStorage.getItem('theme');
+        if (new_theme && new_theme != theme) {
+            setTheme(new_theme);
+        }
+
+        /// Generate selectors
+
+        let systems = document.getElementById('selectors_system');
+        let types = document.getElementById('selectors_type');
+        let machines = document.getElementById('selectors_machine');
+        let data_sizes = document.getElementById('selectors_data_size');
+
+        let unique_systems = [... new Set(data.map(elem => elem.system))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+        function toggle(e, elem, selectors_map) {
+            selectors_map[elem] = !selectors_map[elem];
+            e.target.className = selectors_map[elem] ? 'selector selector-active' : 'selector';
+            render();
+            updateHistory();
+        }
+
+        function toggleAll(e, selectors_map) {
+            const new_value = Object.keys(selectors_map).filter(k => selectors_map[k]).length * 2 < Object.keys(selectors_map).length;
+            [...e.target.parentElement.querySelectorAll('a')].map(
+                elem => { elem.className = new_value ? 'selector selector-active' : 'selector' });
+
+            Object.keys(selectors_map).map(k => { selectors_map[k] = new_value });
+            render();
+            updateHistory();
+        }
+
+        unique_systems.map(elem => {
+            let selector = document.createElement('a');
+            selector.className = 'selector selector-active';
+            selector.appendChild(document.createTextNode(elem));
+            systems.appendChild(selector);
+            selectors.system[elem] = data.some(entry => entry.system == elem && !entry.hide);
+            selector.addEventListener('click', e => toggle(e, elem, selectors.system));
+
+            /// Highlighting summary rows and table columns on hovering over the system selector.
+            selector.addEventListener('mouseover', e => {
+                [...document.querySelectorAll('.summary-row')].map(row => {
+                    row.className = row.dataset.system == elem ? 'summary-row summary-row-hilite' : 'summary-row'
+                });
+                [...document.querySelectorAll('.th-entry')].map(th => {
+                    th.className = th.dataset.system == elem ? 'th-entry th-entry-hilite' : 'th-entry'
+                });
+            });
+            selector.addEventListener('mouseout', e => {
+                [...document.querySelectorAll('.summary-row')].map(row => { row.className = 'summary-row' });
+                [...document.querySelectorAll('.th-entry')].map(row => { row.className = 'th-entry' });
+            });
+        });
+
+        [... new Set(data.map(elem => elem.tags).flat())].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).map(elem => {
+            let selector = document.createElement('a');
+            selector.className = 'selector selector-active';
+            selector.appendChild(document.createTextNode(elem));
+            types.appendChild(selector);
+            selectors.type[elem] = true;
+            selector.addEventListener('click', e => toggle(e, elem, selectors.type));
+        });
+
+        [... new Set(data.map(elem => elem.machine))].sort((a, b) => {
+            const count_diff = data.filter(elem => elem.machine === b).length - data.filter(elem => elem.machine === a).length;
+            return count_diff == 0 ? a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }) : count_diff;
+        }).map(elem => {
+            const selected = elem != 'c6a.2xlarge' && elem != 'c6a.xlarge' && elem != 'c6a.large' && elem != 'c8g.4xlarge' && elem != 't3a.small' && elem != 'c6a.metal';
+            let selector = document.createElement('a');
+            selector.className = selected ? 'selector selector-active' : 'selector';
+            selector.appendChild(document.createTextNode(elem));
+            machines.appendChild(selector);
+            selectors.machine[elem] = selected;
+            selector.addEventListener('click', e => toggle(e, elem, selectors.machine));
+        });
+
+        [... new Set(data.map(elem => elem.benchmark.scale_factor))].sort(
+            (a, b) => ((typeof (b) === 'number') - (typeof (a) === 'number')) || (a - b)).map(elem => {
+                let selector = document.createElement('a');
+                selector.className = 'selector selector-active';
+                selector.appendChild(document.createTextNode(elem));
+                data_sizes.appendChild(selector);
+                selectors.data_size[elem] = true;
+                selector.addEventListener('click', e => toggle(e, elem, selectors.data_size));
+            });
+
+        document.getElementById('selector-opensource-yes').addEventListener('click', e => {
+            selectors.opensource.yes = !selectors.opensource.yes;
+            if (selectors.opensource.yes) {
+                e.target.classList.add('selector-active');
+            } else {
+                e.target.classList.remove('selector-active');
+            }
+            render();
+            updateHistory();
+        });
+
+        document.getElementById('selector-opensource-no').addEventListener('click', e => {
+            selectors.opensource.no = !selectors.opensource.no;
+            if (selectors.opensource.no) {
+                e.target.classList.add('selector-active');
+            } else {
+                e.target.classList.remove('selector-active');
+            }
+            render();
+            updateHistory();
+        });
+
+        document.getElementById('select-all-systems').addEventListener('click', e => toggleAll(e, selectors.system));
+        document.getElementById('select-all-types').addEventListener('click', e => toggleAll(e, selectors.type));
+        document.getElementById('select-all-machines').addEventListener('click', e => toggleAll(e, selectors.machine));
+        document.getElementById('select-all-data-sizes').addEventListener('click', e => toggleAll(e, selectors.data_size));
+
+        [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => elem.addEventListener('click', e => {
+            [...e.target.parentElement.querySelectorAll('a')].map(elem => { elem.className = elem == e.target ? 'selector selector-active' : 'selector' });
+        }));
+
+        // document.getElementById('selector-metric-combined').addEventListener('click', e => { selectors.metric = 'combined'; render(); updateHistory(); });
+        // document.getElementById('selector-metric-cold').addEventListener('click', e => { selectors.metric = 'cold'; render(); updateHistory(); });
+        // document.getElementById('selector-metric-hot').addEventListener('click', e => { selectors.metric = 'hot'; render(); updateHistory(); });
+        // document.getElementById('selector-metric-load').addEventListener('click', e => { selectors.metric = 'load'; render(); updateHistory(); });
+        // document.getElementById('selector-metric-size').addEventListener('click', e => { selectors.metric = 'size'; render(); updateHistory(); });
+
+        // selectors.queries = [...data[0].results[0].keys()].map(k => true);
+
+        function addNote(text) {
+            let note = document.createElement('span');
+            note.className = 'note';
+            note.appendChild(document.createTextNode('†'));
+
+            let tooltip = document.createElement('span');
+            tooltip.className = 'tooltip tooltip-result';
+            tooltip.appendChild(document.createTextNode(text));
+
+            note.appendChild(tooltip);
+            return note;
+        }
+
+        function nameToColor(str) {
+            let x = 0;
+            for (let i = 0; i < str.length; i++) {
+                x += str.charCodeAt(i);
+                x *= 0xff51afd7;
+                x ^= x >> 17;
+            }
+
+            return 60 + Math.abs(x % 240);
+        }
+
+        function renderSummary(filtered_data) {
+            let table = document.getElementById('summary');
+            clearElement(table);
+
+            /// Generate summary
+
+            let summaries;
+            let metric_name = selectors.metric;
+
+            const getMetricValue = (result, metric) => {
+                if (metric === 'load_time') return result.load?.load_time_seconds || 0;
+                if (!result.results || result.results.length === 0) return 0;
+
+                // Compute average over runs
+                const values = result.results.map(r => {
+                    if (metric === 'tps') return r.tps;
+                    if (metric === 'latency_avg') return r.latency_avg_ms;
+                    if (metric === 'latency_stddev') return r.latency_stddev_ms;
+                    if (metric === 'failed_transactions') return r.failed_transactions;
+                    return 0;
+                });
+
+                const sum = values.reduce((a, b) => a + b, 0);
+                return sum / values.length;
+            };
+
+
+            document.getElementById('selector-metric-tps').addEventListener('click', e => { selectors.metric = 'tps'; render(); updateHistory(); });
+            document.getElementById('selector-metric-latency_avg').addEventListener('click', e => { selectors.metric = 'latency_avg'; render(); updateHistory(); });
+            document.getElementById('selector-metric-latency_stddev').addEventListener('click', e => { selectors.metric = 'latency_stddev'; render(); updateHistory(); });
+            document.getElementById('selector-metric-failed_transactions').addEventListener('click', e => { selectors.metric = 'failed_transactions'; render(); updateHistory(); });
+            document.getElementById('selector-metric-load_time').addEventListener('click', e => { selectors.metric = 'load_time'; render(); updateHistory(); });
+
+
+            function updateSelectors() {
+                [...systems.childNodes].map(elem => { elem.className = selectors.system[elem.innerText] ? 'selector selector-active' : 'selector' });
+                [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
+                [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
+                [...data_sizes.childNodes].map(elem => { elem.className = selectors.data_size[elem.innerText] ? 'selector selector-active' : 'selector' });
+
+                [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
+                    elem.className = elem.id == 'selector-metric-' + selectors.metric ? 'selector selector-active' : 'selector'
+                });
+
+
+                document.getElementById('selector-opensource-yes').className = selectors.opensource.yes ? 'selector selector-active' : 'selector';
+                document.getElementById('selector-opensource-no').className = selectors.opensource.no ? 'selector selector-active' : 'selector';
+            }
+
+            const metric_labels = {
+                'tps': 'Transactions per Second',
+                'latency_avg': 'Average Latency (ms)',
+                'latency_stddev': 'Latency StdDev (ms)',
+                'failed_transactions': 'Failed Transactions',
+                'load_time': 'Load Time (s)'
+            };
+
+            document.getElementById('metric-label').innerText = metric_labels[metric_name];
+
+            const is_higher_better = metric_name === 'tps';
+
+            summaries = filtered_data.map(elem => getMetricValue(elem, metric_name));
+
+            const max_val = Math.max(...summaries);
+            const min_val = Math.min(...summaries.filter(x => x > 0));
+
+            let pairs = [];
+            for (let i = 0; i < filtered_data.length; ++i) {
+                pairs.push([summaries[i], filtered_data[i]]);
+            }
+
+            pairs.sort((a, b) => {
+                const valA = a[0];
+                const valB = b[0];
+                if (valA === valB) return 0;
+                if (is_higher_better) {
+                    return valB - valA;
+                } else {
+                    // For latency, lower is better. Handle 0/missing values? 
+                    // Assuming 0 means valid 0 or we should filter them. 
+                    // If 0 is "no data", it should probably be last.
+                    if (valA === 0) return 1;
+                    if (valB === 0) return -1;
+                    return valA - valB;
+                }
+            });
+
+            summaries = pairs.map(x => x[0]);
+            filtered_data = pairs.map(x => x[1]);
+
+
+            // Use already sorted data
+            const max_value_in_set = Math.max(...summaries);
+
+            for (let idx = 0; idx < filtered_data.length; ++idx) {
+                const elem = filtered_data[idx];
+                const val = summaries[idx];
+
+                if (val === 0 || val === null || val === undefined) {
+                    // Optional: handle missing/zero values
+                }
+
+                let tr = document.createElement('tr');
+                tr.className = 'summary-row';
+
+                tr.dataset.system = elem.system;
+
+                let td_name = document.createElement('td');
+                td_name.className = 'summary-name';
+
+                if (!elem.fake) {
+                    let link = document.createElement('a');
+                    const scale_factor = elem.benchmark?.scale_factor ? `, ${elem.benchmark.scale_factor}` : '';
+                    link.appendChild(document.createTextNode(`${elem.system} (${elem.machine}${scale_factor})`));
+                    link.href = "https://github.com/ClickHouse/otlpBench/blob/main/" + elem.source;
+                    link.style.color = `oklch(var(--hashed-link-lightness) 0.2018 ${nameToColor(elem.system.split(' ')[0])})`
+                    td_name.appendChild(link);
+                } else {
+                    td_name.appendChild(document.createTextNode(elem.system));
+                }
+
+                if (elem.comment) { td_name.appendChild(addNote(elem.comment)); }
+                td_name.appendChild(document.createTextNode(': '));
+
+                const percentage = (max_value_in_set > 0) ? (val / max_value_in_set * 100) : 0;
+
+                let td_number = document.createElement('td');
+                td_number.className = 'summary-number';
+
+                let text = "";
+                if (selectors.metric === 'load_time') {
+                    text = `${val.toFixed(2)} s`;
+                } else if (selectors.metric === 'tps') {
+                    text = `${val.toFixed(2)}`;
+                } else if (selectors.metric.includes('latency')) {
+                    text = `${val.toFixed(3)} ms`;
+                } else {
+                    text = `${val}`;
+                }
+
+                td_number.appendChild(document.createTextNode(text));
+
+                let td_bar = document.createElement('td');
+                td_bar.className = 'summary-bar-cell';
+
+                let bar = document.createElement('div');
+                bar.className = 'summary-bar';
+
+                // Use a simple color for now, maybe gradient
+                bar.style.background = `linear-gradient(to right, var(--bar-color1), var(--bar-color2))`;
+                bar.style.width = `${percentage}%`;
+                bar.style.height = `1rem`; // Ensure height
+
+                td_bar.appendChild(bar);
+
+                tr.appendChild(td_name);
+                tr.appendChild(td_number);
+                tr.appendChild(td_bar);
+
+                table.appendChild(tr);
+            }
+
+
+            // We returns the sorted data for details rendering
+            return filtered_data;
+        }
+
+        document.getElementById('selector-metric-tps').addEventListener('click', e => { selectors.metric = 'tps'; render(); updateHistory(); });
+        document.getElementById('selector-metric-latency_avg').addEventListener('click', e => { selectors.metric = 'latency_avg'; render(); updateHistory(); });
+        document.getElementById('selector-metric-latency_stddev').addEventListener('click', e => { selectors.metric = 'latency_stddev'; render(); updateHistory(); });
+        document.getElementById('selector-metric-failed_transactions').addEventListener('click', e => { selectors.metric = 'failed_transactions'; render(); updateHistory(); });
+        document.getElementById('selector-metric-load_time').addEventListener('click', e => { selectors.metric = 'load_time'; render(); updateHistory(); });
+
+
+        function updateSelectors() {
+            [...systems.childNodes].map(elem => { elem.className = selectors.system[elem.innerText] ? 'selector selector-active' : 'selector' });
+            [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
+            [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
+            [...data_sizes.childNodes].map(elem => { elem.className = selectors.data_size[elem.innerText] ? 'selector selector-active' : 'selector' });
+
+            [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
+                elem.className = elem.id == 'selector-metric-' + selectors.metric ? 'selector selector-active' : 'selector'
+            });
+
+
+            document.getElementById('selector-opensource-yes').className = selectors.opensource.yes ? 'selector selector-active' : 'selector';
+            document.getElementById('selector-opensource-no').className = selectors.opensource.no ? 'selector selector-active' : 'selector';
+        }
+
+        function colorize(elem, ratio) {
+            let [r, g, b] = [0, 0, 0];
+
+            /// ratio less than 1 - green
+            /// ratio from 1 to 2 - green to yellow
+            /// ratio from 2 to 10 - yellow to red
+            /// ratio from 10 to 1000 to infinity - red to brown to black
+
+            /// Note: we are using RGB space without proper gamma correction. Read more: https://www.handprint.com/HP/WCL/color1.html
+
+            if (ratio !== null) {
+                if (ratio < 1) {
+                    r = 232;
+                    g = 255;
+                    b = 232;
+                } else if (ratio <= 1) {
+                    g = 255;
+                } else if (ratio <= 2) {
+                    g = 255;
+                    r = (ratio - 1) * 255;
+                } else if (ratio <= 10) {
+                    g = (10 - ratio) / 8 * 255;
+                    r = 255;
+                } else {
+                    r = (1 - ((ratio - 10) / ((ratio - 10) + 1000))) * 255;
+                }
+            }
+
+            if (document.documentElement.getAttribute('data-theme') == 'dark') {
+                r /= 1.5;
+                g /= 1.5;
+                b /= 1.5;
+            }
+
+            elem.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            if (ratio === null || ratio > 10) {
+                /// This will look better on dark backgrounds
+                elem.style.color = 'white';
+            } else {
+                elem.style.color = 'black';
+            }
+
+            /// The best result is highlighted
+            if (ratio == 1) {
+                elem.style.fontWeight = 'bold';
+            }
+        }
+
+        function clearElement(elem) {
+            while (elem.firstChild) {
+                elem.removeChild(elem.lastChild);
+            }
+        }
+
+        function render() {
+            let details_head = document.getElementById('details_head');
+            let details_body = document.getElementById('details_body');
+
+            clearElement(details_head);
+            clearElement(details_body);
+
+            let filtered_data = data.filter(elem =>
+                selectors.system[elem.system] &&
+                selectors.machine[elem.machine] &&
+                selectors.data_size[elem.benchmark.scale_factor] &&
+                elem.tags.filter(type => selectors.type[type]).length > 0 &&
+                ((selectors.opensource.yes && elem.proprietary === "no") || (selectors.opensource.no && elem.proprietary === "yes"))
+            );
+
+
+            if (selectors.metric == 'size') {
+                filtered_data = filtered_data.filter(elem => elem.data_size);
+            } else if (selectors.metric == 'load_time') {
+                filtered_data = filtered_data.filter(elem => elem.load && elem.load.load_time_seconds >= 0);
+            }
+
+            let nothing_selected_elem = document.getElementById('nothing-selected');
+            if (filtered_data.length == 0) {
+                nothing_selected_elem.style.display = 'block';
+                [...document.querySelectorAll('.comparison')].map(e => e.style.display = 'none');
+                return;
+            }
+            nothing_selected_elem.style.display = 'none';
+            [...document.querySelectorAll('.comparison')].map(e => e.style.display = 'block');
+
+            // renderSummary returns the sorted data now
+            filtered_data = renderSummary(filtered_data);
+
+            /// Generate details
+
+            // Header for details
+            {
+                let th_empty = document.createElement('th');
+                th_empty.appendChild(document.createTextNode("Metric / Run"));
+                details_head.appendChild(th_empty);
+            }
+
+            /// Table header (Systems)
+            filtered_data.forEach(elem => {
+                let th = document.createElement('th');
+                th.appendChild(document.createTextNode(`${elem.system}\n(${elem.machine})`));
+                th.className = 'th-entry';
+                th.dataset.system = elem.system;
+                details_head.appendChild(th);
+            });
+
+            // Helper to add a row
+            const addRow = (title, getValueFormat) => {
+                let tr = document.createElement('tr');
+                tr.className = 'shadow';
+                let td_title = document.createElement('td');
+                td_title.appendChild(document.createTextNode(title));
+                tr.appendChild(td_title);
+
+                filtered_data.forEach(elem => {
+                    let td = document.createElement('td');
+                    td.appendChild(document.createTextNode(getValueFormat(elem)));
+                    tr.appendChild(td);
+                });
+                details_body.appendChild(tr);
+            };
+
+            /// Load times
+            addRow("Load Time", elem => elem.load && elem.load.load_time_seconds ? `${elem.load.load_time_seconds.toFixed(2)} s` : '-');
+
+            /// Data sizes (if present in new data? format doesn't show it explicitly aside from maybe missing it)
+            // The sample data doesn't have data_size in the root, it was usually separate. 
+            // Sample: "load": {"load_time_seconds": 7.22...}
+            // No top level data_size in provided json.
+
+            // Runs details
+            if (filtered_data.length > 0 && filtered_data[0].results) {
+                const num_runs = Math.max(...filtered_data.map(e => e.results ? e.results.length : 0));
+
+                for (let i = 0; i < num_runs; i++) {
+                    // We can show TPS, Latency for each run?
+                    // Or just one metric per run row?
+                    // Let's show the Selected Metric for each run.
+
+                    let run_metric_name = selectors.metric === 'combined' ? 'tps' : selectors.metric; // default to tps if combined (though we removed combined)
+
+                    const metric_label = {
+                        'tps': 'TPS',
+                        'latency_avg': 'Avg Latency',
+                        'latency_stddev': 'Lat StdDev',
+                        'failed_transactions': 'Failed Tx',
+                        'load_time': 'Load Time'
+                    }[run_metric_name];
+
+                    if (run_metric_name !== 'load_time') {
+                        addRow(`Run ${i + 1} ${metric_label}`, elem => {
+                            if (elem.results && elem.results[i]) {
+                                const r = elem.results[i];
+                                if (run_metric_name === 'tps') return r.tps.toFixed(2);
+                                if (run_metric_name === 'latency_avg') return `${r.latency_avg_ms.toFixed(3)} ms`;
+                                if (run_metric_name === 'latency_stddev') return `${r.latency_stddev_ms.toFixed(3)} ms`;
+                                if (run_metric_name === 'failed_transactions') return r.failed_transactions;
+                            }
+                            return '-';
+                        });
+                    }
+                }
+            }
+
+            /// The small hint below column heading
+            document.getElementById("scale_hint").textContent = ''; // Clear hint for now
+        }
+
+        function isSubsequence(str, subseq) {
+            let i = 0, j = 0;
+            while (i < str.length && j < subseq.length) {
+                if (str[i] === subseq[j]) j++;
+                i++;
+            }
+            return j === subseq.length;
+        }
+
+        /// A greedy algorithm to find a unique subsequence of a string in a set. Does not necessarily the smallest one.
+        function findUniqueSubsequence(target, others) {
+            const num_matches = others.filter(s => isSubsequence(s, target)).length;
+            let num_failures = 0;
+            for (let i = 0; i < 1000; ++i) {
+                /// We cut characters from pseudorandom places, this gives shorter subsequences than cutting prefix/suffix.
+                const cut_idx = (i + 123) * 67601 % target.length;
+                const cut = target.substring(0, cut_idx) + target.substring(cut_idx + 1, target.length);
+                if (others.filter(s => isSubsequence(s, cut)).length == num_matches) {
+                    target = cut;
+                    num_failures = 0;
+                } else {
+                    ++num_failures;
+                    if (num_failures == target.length) {
+                        break;
+                    }
+                }
+            }
+            return target;
+        }
+
+        function encodedStrings(strings) {
+            let res = {};
+            strings.forEach(s => { res[s] = findUniqueSubsequence(s, strings) });
+            return res;
+        }
+
+        let encoded_keys = {};
+        function encodeState(selectors) {
+            return Object.keys(selectors).map(k => {
+                let encoded_str = k + '=';
+                if (typeof selectors[k] === 'string') {
+                    return encoded_str + selectors[k];
+                }
+                if (!encoded_keys[k]) {
+                    encoded_keys[k] = encodedStrings(Object.keys(selectors[k]));
+                }
+                const count_total = Object.values(selectors[k]).length;
+                const count_selected = Object.values(selectors[k]).filter(x => x).length;
+                if (count_selected * 2 <= count_total) {
+                    encoded_str += '+' + Object.keys(selectors[k]).filter(x => selectors[k][x]).map(x => encoded_keys[k][x]).join('|');
+                } else {
+                    encoded_str += '-' + Object.keys(selectors[k]).filter(x => !selectors[k][x]).map(x => encoded_keys[k][x]).join('|');
+                }
+                return encoded_str;
+            }).join('&');
+        }
+
+        function decodeState(state) {
+            let decoded = {};
+            state.split('&').forEach(kv => {
+                let [k, v] = kv.split('=');
+
+                if (typeof selectors[k] === 'string') {
+                    decoded[k] = v;
+                } else if (typeof selectors[k] === 'object') {
+                    decoded[k] = Array.isArray(selectors[k]) ? [] : {};
+
+                    const filtered = v.substring(1, v.length).split('|').filter(s => s !== '')
+                        .map(substr => Object.keys(selectors[k]).filter(x => isSubsequence(x, decodeURIComponent(substr))).reduce((a, b) => a.length <= b.length ? a : b));
+
+                    if (v.startsWith('+')) {
+                        Object.keys(selectors[k]).forEach(x => {
+                            decoded[k][x] = filtered.includes(x);
+                        });
+                    } else if (v.startsWith('-')) {
+                        Object.keys(selectors[k]).forEach(x => {
+                            decoded[k][x] = !filtered.includes(x);
+                        });
+                    }
+                }
+            });
+            return decoded;
+        }
+
+        function updateHistory() {
+            history.pushState(selectors, '',
+                window.location.pathname + (window.location.search || '') + '#' + encodeState(selectors));
+        }
+
+        window.onpopstate = function (event) {
+            if (!event.state) { return; }
+            selectors = event.state;
+            if (!selectors.opensource) {
+                selectors.opensource = { "yes": true, "no": false };
+            }
+            updateSelectors();
+            render();
+        };
+
+        if (window.location.hash) {
+            try {
+                selectors = decodeState(decodeURIComponent(window.location.hash.substring(1)));
+                if (!selectors.opensource) {
+                    selectors.opensource = { "yes": true, "no": false };
+                }
+            } catch { }
+        }
+
+        updateSelectors();
+        render();
+
+    </script>
+</body>
+
+</html>
