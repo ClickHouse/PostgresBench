@@ -210,5 +210,7 @@ We welcome all types of databases, including open-source and closed-source, comm
 - [x] Postgres by ClickHouse
 - [x] AWS RDS
 - [x] AWS Aurora
-
+- [] Neon 
+- [] Crunchy
+- [] Supabase
 
