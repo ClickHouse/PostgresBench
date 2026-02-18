@@ -75,6 +75,17 @@ need_cmd python3
 # ISO date (UTC is fine for reporting)
 DATE_STR=$(date +"%Y-%m-%d")
 
+############################
+# Get Postgres version
+############################
+echo "== Detecting Postgres version =="
+PG_VERSION=$(PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -t -c "SHOW server_version;" | xargs)
+if [ -z "$PG_VERSION" ]; then
+  die "Failed to detect Postgres version"
+fi
+echo "Postgres version: $PG_VERSION"
+echo
+
 echo "== OLTPBench pgbench automation =="
 echo "Target: ${PGHOST}:${PGPORT} db=${PGDATABASE} user=${PGUSER}"
 echo "Init:   ${INIT_CMD[*]}"
@@ -125,7 +136,7 @@ done
 ############################
 python3 - "$OUT_JSON" "$SYSTEM_NAME" "$DATE_STR" "$MACHINE_DESC" "$CLUSTER_SIZE" "$PROPRIETARY" "$TUNED" "$COMMENT" "$TAGS" \
   "$SCALE_FACTOR" "$CLIENTS" "$THREADS" "$DURATION_SECONDS" "$QUERY_MODE" \
-  "$LOAD_TIME_SECONDS" "${RUN_LOGS[@]}" <<'PY'
+  "$LOAD_TIME_SECONDS" "$PG_VERSION" "${RUN_LOGS[@]}" <<'PY'
 import json
 import re
 import sys
@@ -179,7 +190,7 @@ def parse_pgbench_output(text: str) -> dict:
     }
 
 def main():
-    if len(sys.argv) < 15:
+    if len(sys.argv) < 16:
         raise SystemExit("Unexpected argv length.")
 
     out_json = sys.argv[1]
@@ -199,8 +210,9 @@ def main():
     query_mode = sys.argv[14]
 
     load_time_seconds = float(sys.argv[15])
+    postgres_version = sys.argv[16]
 
-    run_logs = [Path(p) for p in sys.argv[16:]]
+    run_logs = [Path(p) for p in sys.argv[17:]]
     if len(run_logs) != 3:
         raise SystemExit(f"Expected 3 run logs, got {len(run_logs)}")
 
@@ -224,6 +236,7 @@ def main():
         "tuned": tuned,
         "comment": comment,
         "tags": tags,
+        "postgres_version": postgres_version,
         "benchmark": {
             "tool": "pgbench",
             "workload": "TPC-B (built-in)",
