@@ -12,6 +12,7 @@
     "managed",
     "aws"
   ],
+  "postgres_version": "18.1",
   "benchmark": {
     "tool": "pgbench",
     "workload": "TPC-B (built-in)",

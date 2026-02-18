@@ -12,6 +12,7 @@
     "managed",
     "aws"
   ],
+  "postgres_version": "18.1 (Ubuntu 18.1-1.pgdg22.04+2)",
   "benchmark": {
     "tool": "pgbench",
     "workload": "TPC-B (built-in)",

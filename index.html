@@ -348,6 +348,12 @@
             </td>
         </tr>
         <tr>
+            <th>PG Version: </th>
+            <td id="selectors_postgres_version">
+                <a id="select-all-postgres-versions" class="selector selector-active">All</a>
+            </td>
+        </tr>
+        <tr>
             <th>Open source: </th>
             <td id="selectors_opensource">
                 <a id="selector-opensource-yes" class="selector selector-active">Yes</a>
@@ -405,6 +411,7 @@
             "type": {},
             "machine": {},
             "data_size": {},
+            "postgres_version": {},
             "opensource": { "yes": true, "no": true },
             "metric": "tps",
             "queries": [],
@@ -433,6 +440,7 @@
         let types = document.getElementById('selectors_type');
         let machines = document.getElementById('selectors_machine');
         let data_sizes = document.getElementById('selectors_data_size');
+        let postgres_versions = document.getElementById('selectors_postgres_version');
 
         let unique_systems = [... new Set(data.map(elem => elem.system))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
@@ -508,6 +516,15 @@
                 selector.addEventListener('click', e => toggle(e, elem, selectors.data_size));
             });
 
+        [... new Set(data.map(elem => elem.postgres_version).filter(v => v))].sort().map(elem => {
+                let selector = document.createElement('a');
+                selector.className = 'selector selector-active';
+                selector.appendChild(document.createTextNode(elem));
+                postgres_versions.appendChild(selector);
+                selectors.postgres_version[elem] = true;
+                selector.addEventListener('click', e => toggle(e, elem, selectors.postgres_version));
+            });
+
         document.getElementById('selector-opensource-yes').addEventListener('click', e => {
             selectors.opensource.yes = !selectors.opensource.yes;
             if (selectors.opensource.yes) {
@@ -534,6 +551,7 @@
         document.getElementById('select-all-types').addEventListener('click', e => toggleAll(e, selectors.type));
         document.getElementById('select-all-machines').addEventListener('click', e => toggleAll(e, selectors.machine));
         document.getElementById('select-all-data-sizes').addEventListener('click', e => toggleAll(e, selectors.data_size));
+        document.getElementById('select-all-postgres-versions').addEventListener('click', e => toggleAll(e, selectors.postgres_version));
 
         [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => elem.addEventListener('click', e => {
             [...e.target.parentElement.querySelectorAll('a')].map(elem => { elem.className = elem == e.target ? 'selector selector-active' : 'selector' });
@@ -546,6 +564,35 @@
         // document.getElementById('selector-metric-size').addEventListener('click', e => { selectors.metric = 'size'; render(); updateHistory(); });
 
         // selectors.queries = [...data[0].results[0].keys()].map(k => true);
+
+        function findPassiveSelectors(filtered_data) {
+                function getNestedProperty(obj, path) {
+                    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+                }
+                
+                function process(name, container) {
+                    const filtered = new Set(filtered_data.map(elem => {
+                        const value = getNestedProperty(elem, name);
+                        return Array.isArray(value) ? value : [value];
+                    }).flat().filter(x => x !== undefined && x !== null).map(x => String(x)));
+                    
+                    for (let elem of container.childNodes) {
+                        if (elem.tagName == 'A') {
+                            if (elem.classList.contains('selector-active') && !filtered.has(elem.innerText)) {
+                                elem.className = 'selector selector-passive';
+                            } else if (elem.classList.contains('selector-passive') && filtered.has(elem.innerText)) {
+                                elem.className = 'selector selector-active';
+                            }
+                        }
+                    }
+                }
+                
+                process('system', systems);
+                process('tags', types);
+                process('machine', machines);
+                process('benchmark.scale_factor', data_sizes);
+                process('postgres_version', postgres_versions);
+        }
 
         function addNote(text) {
             let note = document.createElement('span');
@@ -610,6 +657,7 @@
                 [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
                 [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
                 [...data_sizes.childNodes].map(elem => { elem.className = selectors.data_size[elem.innerText] ? 'selector selector-active' : 'selector' });
+                [...postgres_versions.childNodes].map(elem => { elem.className = selectors.postgres_version[elem.innerText] ? 'selector selector-active' : 'selector' });
 
                 [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
                     elem.className = elem.id == 'selector-metric-' + selectors.metric ? 'selector selector-active' : 'selector'
@@ -619,6 +667,8 @@
                 document.getElementById('selector-opensource-yes').className = selectors.opensource.yes ? 'selector selector-active' : 'selector';
                 document.getElementById('selector-opensource-no').className = selectors.opensource.no ? 'selector selector-active' : 'selector';
             }
+
+            
 
             const metric_labels = {
                 'tps': 'Transactions per Second',
@@ -750,6 +800,7 @@
             [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
             [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
             [...data_sizes.childNodes].map(elem => { elem.className = selectors.data_size[elem.innerText] ? 'selector selector-active' : 'selector' });
+            [...postgres_versions.childNodes].map(elem => { elem.className = selectors.postgres_version[elem.innerText] ? 'selector selector-active' : 'selector' });
 
             [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
                 elem.className = elem.id == 'selector-metric-' + selectors.metric ? 'selector selector-active' : 'selector'
@@ -825,6 +876,7 @@
                 selectors.system[elem.system] &&
                 selectors.machine[elem.machine] &&
                 selectors.data_size[elem.benchmark.scale_factor] &&
+                (!elem.postgres_version || selectors.postgres_version[elem.postgres_version]) &&
                 elem.tags.filter(type => selectors.type[type]).length > 0 &&
                 ((selectors.opensource.yes && elem.proprietary === "no") || (selectors.opensource.no && elem.proprietary === "yes"))
             );
@@ -923,6 +975,8 @@
                     }
                 }
             }
+
+            findPassiveSelectors(filtered_data);
 
             /// The small hint below column heading
             document.getElementById("scale_hint").textContent = ''; // Clear hint for now
