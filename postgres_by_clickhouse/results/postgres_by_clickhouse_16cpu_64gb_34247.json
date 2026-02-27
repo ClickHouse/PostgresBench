@@ -1,5 +1,5 @@
 {
-  "system": "Postgres by Clickhouse",
+  "system": "Postgres by ClickHouse",
   "date": "2026-02-26",
   "machine": "16vCPU, 64GB RAM",
   "cluster_size": 1,
