@@ -6,6 +6,7 @@
   "proprietary": "yes",
   "tuned": "no",
   "comment": "",
+  "postgres_version": "18.1",
   "tags": [
     "PostgreSQL-compatible",
     "OLTP",

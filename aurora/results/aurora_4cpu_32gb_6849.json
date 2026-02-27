@@ -1,6 +1,6 @@
 {
   "system": "AWS Aurora",
-  "date": "2026-02-18",
+  "date": "2026-02-25",
   "machine": "4vCPU, 32GB RAM",
   "cluster_size": 1,
   "proprietary": "yes",
@@ -12,6 +12,7 @@
     "managed",
     "aws"
   ],
+  "postgres_version": "17.4",
   "benchmark": {
     "tool": "pgbench",
     "workload": "TPC-B (built-in)",
@@ -22,35 +23,35 @@
     "query_mode": "prepared"
   },
   "load": {
-    "load_time_seconds": 1454.316162929
+    "load_time_seconds": 1510.026269241
   },
   "results": [
     {
       "run": 1,
-      "tps": 2570.638202,
-      "transactions": 1541114,
+      "tps": 2258.026483,
+      "transactions": 1353766,
       "failed_transactions": 0,
-      "latency_avg_ms": 99.551,
-      "latency_stddev_ms": 31.404,
-      "initial_connection_time_ms": 734.271
+      "latency_avg_ms": 113.334,
+      "latency_stddev_ms": 35.739,
+      "initial_connection_time_ms": 747.511
     },
     {
       "run": 2,
-      "tps": 2692.793725,
-      "transactions": 1614620,
+      "tps": 2380.125092,
+      "transactions": 1427241,
       "failed_transactions": 0,
-      "latency_avg_ms": 95.025,
-      "latency_stddev_ms": 30.582,
-      "initial_connection_time_ms": 692.788
+      "latency_avg_ms": 107.497,
+      "latency_stddev_ms": 34.706,
+      "initial_connection_time_ms": 719.581
     },
     {
       "run": 3,
-      "tps": 2705.822123,
-      "transactions": 1622276,
+      "tps": 2398.986938,
+      "transactions": 1438345,
       "failed_transactions": 0,
-      "latency_avg_ms": 94.571,
-      "latency_stddev_ms": 29.64,
-      "initial_connection_time_ms": 721.184
+      "latency_avg_ms": 106.661,
+      "latency_stddev_ms": 33.836,
+      "initial_connection_time_ms": 745.098
     }
   ]
 }

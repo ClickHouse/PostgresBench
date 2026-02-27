@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>OLTP-Bench — A Benchmark For Postgres-Compatible DBMS</title>
+    <title>PostgresBench — A Benchmark For Postgres-Compatible DBMS</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -330,7 +330,7 @@
 
     <div class="header stick-left">
         <span class="nowrap themes"><span id="toggle-dark">🌚</span><span id="toggle-light">🌞</span></span>
-        <h1>OLTP-Bench — A Benchmark For Postgres-Compatible DBMS</h1>
+        <h1>PostgresBench — A Benchmark For Postgres-Compatible DBMS</h1>
         <a href="https://github.com/ClickHouse/oltpBench/">Methodology</a> | <a href="https://github.com/ClickHouse/oltpBench/">Reproduce and Validate the Results</a> | <a href="https://github.com/ClickHouse/oltpBench/">Add a System</a> | See also: <a href="https://benchmark.clickhouse.com/">ClickBench</a>
     </div>
 
@@ -456,6 +456,19 @@
 
         let unique_systems = [... new Set(data.map(elem => elem.system))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
+        // Helper function to convert scale factor to GB rounded to nearest 100GB
+        function scaleFactorToGB(scale_factor) {
+            const gb = scale_factor * 0.016; // 16MB per scale factor
+            return Math.round(gb / 100) * 100; // Round to nearest 100GB
+        }
+
+        // Helper function to extract major.minor version
+        function extractVersion(version_string) {
+            if (!version_string) return null;
+            const match = version_string.match(/^(\d+\.\d+)/);
+            return match ? match[1] : version_string;
+        }
+
         function toggle(e, elem, selectors_map) {
             selectors_map[elem] = !selectors_map[elem];
             e.target.className = selectors_map[elem] ? 'selector selector-active' : 'selector';
@@ -518,23 +531,27 @@
             selector.addEventListener('click', e => toggle(e, elem, selectors.machine));
         });
 
-        [... new Set(data.map(elem => elem.benchmark.scale_factor))].sort(
-            (a, b) => ((typeof (b) === 'number') - (typeof (a) === 'number')) || (a - b)).map(elem => {
+        [... new Set(data.map(elem => scaleFactorToGB(elem.benchmark.scale_factor)))].sort(
+            (a, b) => a - b).map(gb_size => {
                 let selector = document.createElement('a');
                 selector.className = 'selector selector-active';
-                selector.appendChild(document.createTextNode(elem));
+                selector.appendChild(document.createTextNode(gb_size + ' GB'));
                 data_sizes.appendChild(selector);
-                selectors.data_size[elem] = true;
-                selector.addEventListener('click', e => toggle(e, elem, selectors.data_size));
+                selectors.data_size[gb_size] = true;
+                selector.addEventListener('click', e => toggle(e, gb_size, selectors.data_size));
             });
 
-        [... new Set(data.map(elem => elem.postgres_version).filter(v => v))].sort().map(elem => {
+        [... new Set(data.map(elem => extractVersion(elem.postgres_version)).filter(v => v))].sort((a, b) => {
+                const [aMajor, aMinor] = a.split('.').map(Number);
+                const [bMajor, bMinor] = b.split('.').map(Number);
+                return aMajor !== bMajor ? aMajor - bMajor : aMinor - bMinor;
+            }).map(version => {
                 let selector = document.createElement('a');
                 selector.className = 'selector selector-active';
-                selector.appendChild(document.createTextNode(elem));
+                selector.appendChild(document.createTextNode(version));
                 postgres_versions.appendChild(selector);
-                selectors.postgres_version[elem] = true;
-                selector.addEventListener('click', e => toggle(e, elem, selectors.postgres_version));
+                selectors.postgres_version[version] = true;
+                selector.addEventListener('click', e => toggle(e, version, selectors.postgres_version));
             });
 
         document.getElementById('selector-opensource-yes').addEventListener('click', e => {
@@ -599,11 +616,33 @@
                     }
                 }
                 
+                // Custom process for data_size (with GB conversion)
+                const filtered_data_sizes = new Set(filtered_data.map(elem => scaleFactorToGB(elem.benchmark.scale_factor)).map(x => String(x) + ' GB'));
+                for (let elem of data_sizes.childNodes) {
+                    if (elem.tagName == 'A') {
+                        if (elem.classList.contains('selector-active') && !filtered_data_sizes.has(elem.innerText)) {
+                            elem.className = 'selector selector-passive';
+                        } else if (elem.classList.contains('selector-passive') && filtered_data_sizes.has(elem.innerText)) {
+                            elem.className = 'selector selector-active';
+                        }
+                    }
+                }
+                
+                // Custom process for postgres_version (with version extraction)
+                const filtered_versions = new Set(filtered_data.map(elem => extractVersion(elem.postgres_version)).filter(x => x).map(x => String(x)));
+                for (let elem of postgres_versions.childNodes) {
+                    if (elem.tagName == 'A') {
+                        if (elem.classList.contains('selector-active') && !filtered_versions.has(elem.innerText)) {
+                            elem.className = 'selector selector-passive';
+                        } else if (elem.classList.contains('selector-passive') && filtered_versions.has(elem.innerText)) {
+                            elem.className = 'selector selector-active';
+                        }
+                    }
+                }
+                
                 process('system', systems);
                 process('tags', types);
                 process('machine', machines);
-                process('benchmark.scale_factor', data_sizes);
-                process('postgres_version', postgres_versions);
         }
 
         function addNote(text) {
@@ -668,7 +707,10 @@
                 [...systems.childNodes].map(elem => { elem.className = selectors.system[elem.innerText] ? 'selector selector-active' : 'selector' });
                 [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
                 [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
-                [...data_sizes.childNodes].map(elem => { elem.className = selectors.data_size[elem.innerText] ? 'selector selector-active' : 'selector' });
+                [...data_sizes.childNodes].map(elem => { 
+                    const gb_value = parseInt(elem.innerText); // Extract numeric value from "100 GB"
+                    elem.className = selectors.data_size[gb_value] ? 'selector selector-active' : 'selector';
+                });
                 [...postgres_versions.childNodes].map(elem => { elem.className = selectors.postgres_version[elem.innerText] ? 'selector selector-active' : 'selector' });
 
                 [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
@@ -811,7 +853,10 @@
             [...systems.childNodes].map(elem => { elem.className = selectors.system[elem.innerText] ? 'selector selector-active' : 'selector' });
             [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
             [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
-            [...data_sizes.childNodes].map(elem => { elem.className = selectors.data_size[elem.innerText] ? 'selector selector-active' : 'selector' });
+            [...data_sizes.childNodes].map(elem => { 
+                const gb_value = parseInt(elem.innerText); // Extract numeric value from "100 GB"
+                elem.className = selectors.data_size[gb_value] ? 'selector selector-active' : 'selector';
+            });
             [...postgres_versions.childNodes].map(elem => { elem.className = selectors.postgres_version[elem.innerText] ? 'selector selector-active' : 'selector' });
 
             [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
@@ -887,8 +932,8 @@
             let filtered_data = data.filter(elem =>
                 selectors.system[elem.system] &&
                 selectors.machine[elem.machine] &&
-                selectors.data_size[elem.benchmark.scale_factor] &&
-                (!elem.postgres_version || selectors.postgres_version[elem.postgres_version]) &&
+                selectors.data_size[scaleFactorToGB(elem.benchmark.scale_factor)] &&
+                (!elem.postgres_version || selectors.postgres_version[extractVersion(elem.postgres_version)]) &&
                 elem.tags.filter(type => selectors.type[type]).length > 0 &&
                 ((selectors.opensource.yes && elem.proprietary === "no") || (selectors.opensource.no && elem.proprietary === "yes"))
             );
@@ -1032,7 +1077,7 @@
 
         let encoded_keys = {};
         function encodeState(selectors) {
-            return Object.keys(selectors).map(k => {
+            return Object.keys(selectors).filter(k => k !== 'data_size').map(k => {
                 let encoded_str = k + '=';
                 if (typeof selectors[k] === 'string') {
                     return encoded_str + selectors[k];
@@ -1055,6 +1100,11 @@
             let decoded = {};
             state.split('&').forEach(kv => {
                 let [k, v] = kv.split('=');
+
+                // Skip decoding data_size - always default to all selected
+                if (k === 'data_size') {
+                    return;
+                }
 
                 if (typeof selectors[k] === 'string') {
                     decoded[k] = v;
@@ -1099,6 +1149,13 @@
                 if (!selectors.opensource) {
                     selectors.opensource = { "yes": true, "no": false };
                 }
+                // Force all data sizes to be selected by default
+                if (!selectors.data_size) {
+                    selectors.data_size = {};
+                }
+                [...new Set(data.map(elem => scaleFactorToGB(elem.benchmark.scale_factor)))].forEach(gb_size => {
+                    selectors.data_size[gb_size] = true;
+                });
             } catch { }
         }
 

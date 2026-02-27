@@ -1,6 +1,6 @@
 {
-  "system": "Postgres by ClickHouse",
-  "date": "2026-02-12",
+  "system": "Postgres by Clickhouse",
+  "date": "2026-02-26",
   "machine": "16vCPU, 64GB RAM",
   "cluster_size": 1,
   "proprietary": "yes",
@@ -23,35 +23,35 @@
     "query_mode": "prepared"
   },
   "load": {
-    "load_time_seconds": 3455.609901728
+    "load_time_seconds": 3455.250336675
   },
   "results": [
     {
       "run": 1,
-      "tps": 18869.340493,
-      "transactions": 11308108,
+      "tps": 18823.681058,
+      "transactions": 11280575,
       "failed_transactions": 0,
-      "latency_avg_ms": 13.537,
-      "latency_stddev_ms": 2.885,
-      "initial_connection_time_ms": 780.635
+      "latency_avg_ms": 13.57,
+      "latency_stddev_ms": 3.017,
+      "initial_connection_time_ms": 788.079
     },
     {
       "run": 2,
-      "tps": 20369.985561,
-      "transactions": 12205195,
+      "tps": 20325.393983,
+      "transactions": 12177952,
       "failed_transactions": 0,
-      "latency_avg_ms": 12.545,
-      "latency_stddev_ms": 2.634,
-      "initial_connection_time_ms": 870.901
+      "latency_avg_ms": 12.572,
+      "latency_stddev_ms": 2.625,
+      "initial_connection_time_ms": 889.596
     },
     {
       "run": 3,
-      "tps": 21860.450531,
-      "transactions": 13099996,
+      "tps": 21807.030769,
+      "transactions": 13065387,
       "failed_transactions": 0,
-      "latency_avg_ms": 11.696,
-      "latency_stddev_ms": 2.198,
-      "initial_connection_time_ms": 787.387
+      "latency_avg_ms": 11.723,
+      "latency_stddev_ms": 2.163,
+      "initial_connection_time_ms": 918.096
     }
   ]
 }

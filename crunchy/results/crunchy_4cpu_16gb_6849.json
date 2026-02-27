@@ -24,6 +24,7 @@
   "load": {
     "load_time_seconds": 547.50148094
   },
+  "postgres_version": "18.1",
   "results": [
     {
       "run": 1,
