@@ -9,12 +9,9 @@ set -euo pipefail
 # 3) produce a JSON file matching the minimal template discussed
 #
 # Requirements:
-# - pgbench available in PATH
-# - python3 available
-#
-# Notes:
-# - This script parses standard pgbench output (no -l percentile parsing).
-# - If a run fails or parsing fails, the script exits with a clear error.
+# - pgbench >= 17 available in PATH
+# - jq available in PATH
+# - awk, psql available in PATH
 
 ############################
 # Config (edit as needed)
@@ -40,7 +37,7 @@ PGDATABASE=${PGDATABASE:-postgres}
 SCALE_FACTOR=${SCALE_FACTOR:-6849}
 CLIENTS=${CLIENTS:-256}
 THREADS=${THREADS:-16}
-DURATION_SECONDS=${DURATION_SECONDS:-600}
+DURATION=${DURATION:-600}
 QUERY_MODE=${QUERY_MODE:-prepared}
 PROGRESS_SECONDS=${PROGRESS_SECONDS:-30}
 
@@ -48,14 +45,21 @@ PROGRESS_SECONDS=${PROGRESS_SECONDS:-30}
 OUT_JSON=${OUT_JSON:-"oltpbench_result.json"}
 WORKDIR=${WORKDIR:-"./oltpbench_tmp"}
 
+# Transaction logs are isolated in a timestamped subdirectory so repeated runs
+# (with different OUT_JSON names) never overwrite each other's raw log files.
+RUN_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+TXLOG_DIR="$WORKDIR/txlogs_${RUN_TIMESTAMP}"
+
 ############################
 # Derived commands
 ############################
 INIT_CMD=(pgbench -i -s "$SCALE_FACTOR" -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE")
-RUN_CMD=(pgbench -c "$CLIENTS" -j "$THREADS" -T "$DURATION_SECONDS" -M "$QUERY_MODE" -P "$PROGRESS_SECONDS"
-         -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE")
+RUN_CMD=(pgbench -c "$CLIENTS" -j "$THREADS" -T "$DURATION" -M "$QUERY_MODE" -P "$PROGRESS_SECONDS"
+         -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"
+         -l)
 
 mkdir -p "$WORKDIR"
+mkdir -p "$TXLOG_DIR"
 
 ############################
 # Helpers
@@ -70,7 +74,9 @@ need_cmd() {
 }
 
 need_cmd pgbench
-need_cmd python3
+need_cmd jq
+need_cmd awk
+need_cmd psql
 
 # ISO date (UTC is fine for reporting)
 DATE_STR=$(date +"%Y-%m-%d")
@@ -98,166 +104,113 @@ echo
 ############################
 echo "== Initializing database (pgbench -i) =="
 INIT_LOG="$WORKDIR/init.log"
-START_NS=$(python3 - <<'PY'
-import time
-print(time.time_ns())
-PY
-)
+LOAD_START=$(date +%s%N)
 PGPASSWORD="$PGPASSWORD" "${INIT_CMD[@]}" | tee "$INIT_LOG"
-END_NS=$(python3 - <<'PY'
-import time
-print(time.time_ns())
-PY
-)
-
-LOAD_TIME_SECONDS=$(python3 - <<PY
-start_ns = int("$START_NS")
-end_ns = int("$END_NS")
-print((end_ns - start_ns) / 1e9)
-PY
-)
+LOAD_END=$(date +%s%N)
+LOAD_TIME_SECONDS=$(awk "BEGIN {printf \"%.3f\", ($LOAD_END - $LOAD_START) / 1e9}")
 echo "Load time: ${LOAD_TIME_SECONDS}s"
 echo
 
 ############################
 # 2) Run benchmark 3 times
 ############################
-RUN_LOGS=()
+# pgbench needs ~1 fd per client + 1 per thread log file; raise the limit to be safe.
+ulimit -n 4096 2>/dev/null || echo "Warning: could not raise open-file limit (ulimit -n 4096); proceeding anyway."
+
+RUN_JSONS=()
 for i in 1 2 3; do
-  echo "== Run #$i =="
+  echo "== Run #$i (output -> $WORKDIR/run_${i}.log) =="
   LOG="$WORKDIR/run_${i}.log"
-  PGPASSWORD="$PGPASSWORD" "${RUN_CMD[@]}"  | tee "$LOG"
-  RUN_LOGS+=("$LOG")
+  TXLOG_PREFIX="$TXLOG_DIR/txlog_${i}"
+  PGPASSWORD="$PGPASSWORD" "${RUN_CMD[@]}" --log-prefix "$TXLOG_PREFIX" > "$LOG"
+
+  # Parse summary metrics from pgbench output 
+  # Field positions:
+  #   "number of failed transactions: 0 (0.000%)"  -> $5  ($6 is "(0.000%)")
+  #   "latency average = 12.602 ms"                -> $(NF-1)  (skip trailing "ms")
+  #   "tps = 2491.4 (without initial ...)"         -> $3
+  eval $(awk '
+    /number of transactions actually processed:/ { print "TX="      $NF }
+    /number of failed transactions:/             { print "FAILED="  $5  }
+    /latency average/                            { print "LAT_AVG=" $(NF-1) }
+    /latency stddev/                             { print "LAT_STD=" $(NF-1) }
+    /initial connection time =/                    { print "CONN=" $(NF-1) }
+    /tps =/ && /without/                         { print "TPS="     $3  }
+  ' "$LOG")
+
+  # Compute P95 and P99 from transaction log files using a streaming histogram.
+  # Log format: client_id tx_no latency_us script_no epoch_s epoch_us [sched_lag_us]
+  # Memory: O(unique latency values) rather than O(total transactions).
+  read P95 P99 < <(awk '
+    NF >= 3 { hist[$3]++; total++ }
+    END {
+      if (total == 0) { print "ERROR: no latency data" > "/dev/stderr"; exit 1 }
+      t95 = int(total * 0.95)
+      t99 = int(total * 0.99)
+      n = asorti(hist, keys, "@ind_num_asc")
+      cumulative = 0; p95 = 0; p99 = 0
+      for (i = 1; i <= n; i++) {
+        cumulative += hist[keys[i]]
+        if (p95 == 0 && cumulative > t95) p95 = keys[i]
+        if (cumulative > t99) { p99 = keys[i]; break }
+      }
+      printf "%.3f %.3f\n", p95 / 1000.0, p99 / 1000.0
+    }
+  ' "$TXLOG_PREFIX"*)
+
+  echo "  TPS: $TPS  |  avg: ${LAT_AVG} ms  |  P95: ${P95} ms  |  P99: ${P99} ms"
   echo
+
+  RUN_JSONS+=("$(jq -n \
+    --argjson run    "$i"       \
+    --argjson tps    "$TPS"     \
+    --argjson tx     "$TX"      \
+    --argjson failed "$FAILED"  \
+    --argjson avg    "$LAT_AVG" \
+    --argjson std    "$LAT_STD" \
+    --argjson conn   "$CONN"    \
+    --argjson p95    "$P95"     \
+    --argjson p99    "$P99"     \
+    '{run: $run, tps: $tps, transactions: $tx, failed_transactions: $failed,
+      latency_avg_ms: $avg, latency_stddev_ms: $std,
+      initial_connection_time_ms: $conn, latency_p95_ms: $p95, latency_p99_ms: $p99}')")
 done
 
 ############################
-# 3) Parse outputs + write JSON
+# 3) Assemble JSON
 ############################
-python3 - "$OUT_JSON" "$SYSTEM_NAME" "$DATE_STR" "$MACHINE_DESC" "$CLUSTER_SIZE" "$PROPRIETARY" "$TUNED" "$COMMENT" "$TAGS" \
-  "$SCALE_FACTOR" "$CLIENTS" "$THREADS" "$DURATION_SECONDS" "$QUERY_MODE" \
-  "$LOAD_TIME_SECONDS" "$PG_VERSION" "${RUN_LOGS[@]}" <<'PY'
-import json
-import re
-import sys
-from pathlib import Path
+RESULTS_JSON=$(printf '%s\n' "${RUN_JSONS[@]}" | jq -s '.')
+TAGS_JSON=$(printf '%s' "$TAGS" | jq -Rc 'split(",")')
 
-def parse_pgbench_output(text: str) -> dict:
-    """
-    Parse metrics from pgbench output similar to:
-      number of transactions actually processed: 1494662
-      number of failed transactions: 0 (0.000%)
-      latency average = 12.602 ms
-      latency stddev = 2.472 ms
-      initial connection time = 90.044 ms
-      tps = 2491.437593 (without initial connection time)
-    """
-    def m(pattern):
-        return re.search(pattern, text, re.MULTILINE)
-
-    tx = m(r"number of transactions actually processed:\s*([0-9]+)")
-    failed = m(r"number of failed transactions:\s*([0-9]+)")
-    lat_avg = m(r"latency average\s*=\s*([0-9.]+)\s*ms")
-    lat_std = m(r"latency stddev\s*=\s*([0-9.]+)\s*ms")
-    conn = m(r"initial connection time\s*=\s*([0-9.]+)\s*ms")
-    tps = m(r"tps\s*=\s*([0-9.]+)\s*\(without initial connection time\)")
-
-    missing = []
-    for name, match in [
-        ("transactions", tx),
-        ("failed_transactions", failed),
-        ("latency_avg_ms", lat_avg),
-        ("latency_stddev_ms", lat_std),
-        ("initial_connection_time_ms", conn),
-        ("tps", tps),
-    ]:
-        if not match:
-            missing.append(name)
-
-    if missing:
-        # Provide a helpful snippet for debugging parsing mismatches
-        snippet = "\n".join(text.splitlines()[-40:])
-        raise ValueError(f"Failed to parse pgbench output fields: {', '.join(missing)}\n"
-                         f"Last lines of output:\n{snippet}")
-
-    return {
-        "tps": float(tps.group(1)),
-        "transactions": int(tx.group(1)),
-        "failed_transactions": int(failed.group(1)),
-        "latency_avg_ms": float(lat_avg.group(1)),
-        "latency_stddev_ms": float(lat_std.group(1)),
-        "initial_connection_time_ms": float(conn.group(1)),
-    }
-
-def main():
-    if len(sys.argv) < 16:
-        raise SystemExit("Unexpected argv length.")
-
-    out_json = sys.argv[1]
-    system_name = sys.argv[2]
-    date_str = sys.argv[3]
-    machine_desc = sys.argv[4]
-    cluster_size = int(sys.argv[5])
-    proprietary = sys.argv[6]
-    tuned = sys.argv[7]
-    comment = sys.argv[8]
-    tags_csv = sys.argv[9]
-
-    scale_factor = int(sys.argv[10])
-    clients = int(sys.argv[11])
-    threads = int(sys.argv[12])
-    duration_seconds = int(sys.argv[13])
-    query_mode = sys.argv[14]
-
-    load_time_seconds = float(sys.argv[15])
-    postgres_version = sys.argv[16]
-
-    run_logs = [Path(p) for p in sys.argv[17:]]
-    if len(run_logs) != 3:
-        raise SystemExit(f"Expected 3 run logs, got {len(run_logs)}")
-
-    tags = [t.strip() for t in tags_csv.split(",") if t.strip()]
-
-    results = []
-    for idx, log_path in enumerate(run_logs, start=1):
-        text = log_path.read_text(encoding="utf-8", errors="replace")
-        parsed = parse_pgbench_output(text)
-        results.append({
-            "run": idx,
-            **parsed
-        })
-
-    payload = {
-        "system": system_name,
-        "date": date_str,
-        "machine": machine_desc,
-        "cluster_size": cluster_size,
-        "proprietary": proprietary,
-        "tuned": tuned,
-        "comment": comment,
-        "tags": tags,
-        "postgres_version": postgres_version,
-        "benchmark": {
-            "tool": "pgbench",
-            "workload": "TPC-B (built-in)",
-            "scale_factor": scale_factor,
-            "clients": clients,
-            "threads": threads,
-            "duration_seconds": duration_seconds,
-            "query_mode": query_mode
-        },
-        "load": {
-            "load_time_seconds": load_time_seconds
-        },
-        "results": results
-    }
-
-    Path(out_json).write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8")
-    print(f"Wrote {out_json}")
-
-if __name__ == "__main__":
-    main()
-PY
+jq -n \
+  --arg     system   "$SYSTEM_NAME"       \
+  --arg     date     "$DATE_STR"          \
+  --arg     machine  "$MACHINE_DESC"      \
+  --argjson cluster  "$CLUSTER_SIZE"      \
+  --arg     prop     "$PROPRIETARY"       \
+  --arg     tuned    "$TUNED"             \
+  --arg     comment  "$COMMENT"           \
+  --argjson tags     "$TAGS_JSON"         \
+  --arg     pgver    "$PG_VERSION"        \
+  --argjson scale    "$SCALE_FACTOR"      \
+  --argjson clients  "$CLIENTS"           \
+  --argjson threads  "$THREADS"           \
+  --argjson duration "$DURATION"  \
+  --arg     qmode    "$QUERY_MODE"        \
+  --argjson loadtime "$LOAD_TIME_SECONDS" \
+  --argjson results  "$RESULTS_JSON"      \
+  '{
+    system: $system, date: $date, machine: $machine,
+    cluster_size: $cluster, proprietary: $prop, tuned: $tuned, comment: $comment,
+    tags: $tags, postgres_version: $pgver,
+    benchmark: {
+      tool: "pgbench", workload: "TPC-B (built-in)",
+      scale_factor: $scale, clients: $clients, threads: $threads,
+      duration: $duration, query_mode: $qmode
+    },
+    load: {load_time_seconds: $loadtime},
+    results: $results
+  }' > "$OUT_JSON"
 
 echo "== Done =="
 echo "JSON: $OUT_JSON"

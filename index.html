@@ -378,6 +378,8 @@
                 <a class="selector selector-active" id="selector-metric-tps">TPS</a>
                 <a class="selector" id="selector-metric-latency_avg">Avg Latency</a>
                 <a class="selector" id="selector-metric-latency_stddev">Latency StdDev</a>
+                <a class="selector" id="selector-metric-latency_p95">P95 Latency</a>
+                <a class="selector" id="selector-metric-latency_p99">P99 Latency</a>
                 <a class="selector" id="selector-metric-failed_transactions">Failed Tx</a>
                 <a class="selector" id="selector-metric-load_time">Load Time</a>
             </td>
@@ -687,6 +689,8 @@
                     if (metric === 'tps') return r.tps;
                     if (metric === 'latency_avg') return r.latency_avg_ms;
                     if (metric === 'latency_stddev') return r.latency_stddev_ms;
+                    if (metric === 'latency_p95') return r.latency_p95_ms;
+                    if (metric === 'latency_p99') return r.latency_p99_ms;
                     if (metric === 'failed_transactions') return r.failed_transactions;
                     return 0;
                 });
@@ -699,6 +703,8 @@
             document.getElementById('selector-metric-tps').addEventListener('click', e => { selectors.metric = 'tps'; render(); updateHistory(); });
             document.getElementById('selector-metric-latency_avg').addEventListener('click', e => { selectors.metric = 'latency_avg'; render(); updateHistory(); });
             document.getElementById('selector-metric-latency_stddev').addEventListener('click', e => { selectors.metric = 'latency_stddev'; render(); updateHistory(); });
+            document.getElementById('selector-metric-latency_p95').addEventListener('click', e => { selectors.metric = 'latency_p95'; render(); updateHistory(); });
+            document.getElementById('selector-metric-latency_p99').addEventListener('click', e => { selectors.metric = 'latency_p99'; render(); updateHistory(); });
             document.getElementById('selector-metric-failed_transactions').addEventListener('click', e => { selectors.metric = 'failed_transactions'; render(); updateHistory(); });
             document.getElementById('selector-metric-load_time').addEventListener('click', e => { selectors.metric = 'load_time'; render(); updateHistory(); });
 
@@ -728,6 +734,8 @@
                 'tps': 'Transactions per Second',
                 'latency_avg': 'Average Latency (ms)',
                 'latency_stddev': 'Latency StdDev (ms)',
+                'latency_p95': 'P95 Latency (ms)',
+                'latency_p99': 'P99 Latency (ms)',
                 'failed_transactions': 'Failed Transactions',
                 'load_time': 'Load Time (s)'
             };

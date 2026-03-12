@@ -1,6 +1,6 @@
 {
   "system": "AWS RDS",
-  "date": "2026-02-25",
+  "date": "2026-03-11",
   "machine": "16vCPU, 64GB RAM",
   "cluster_size": 1,
   "proprietary": "yes",
@@ -12,46 +12,52 @@
     "managed",
     "aws"
   ],
-  "postgres_version": "18.2",
+  "postgres_version": "18.3",
   "benchmark": {
     "tool": "pgbench",
     "workload": "TPC-B (built-in)",
     "scale_factor": 34247,
     "clients": 256,
     "threads": 16,
-    "duration_seconds": 600,
+    "duration": 600,
     "query_mode": "prepared"
   },
   "load": {
-    "load_time_seconds": 4865.574006458
+    "load_time_seconds": 4996.027
   },
   "results": [
     {
       "run": 1,
-      "tps": 5601.993645,
-      "transactions": 3356796,
+      "tps": 5704.154370,
+      "transactions": 3418329,
       "failed_transactions": 0,
-      "latency_avg_ms": 45.682,
-      "latency_stddev_ms": 36.676,
-      "initial_connection_time_ms": 842.337
+      "latency_avg_ms": 44.857,
+      "latency_stddev_ms": 30.369,
+      "initial_connection_time_ms": 815.927,
+      "latency_p95_ms": 74.135,
+      "latency_p99_ms": 97.853
     },
     {
       "run": 2,
-      "tps": 4394.309722,
-      "transactions": 2633565,
+      "tps": 4368.034368,
+      "transactions": 2617635,
       "failed_transactions": 0,
-      "latency_avg_ms": 58.235,
-      "latency_stddev_ms": 104.885,
-      "initial_connection_time_ms": 823.703
+      "latency_avg_ms": 58.585,
+      "latency_stddev_ms": 107.702,
+      "initial_connection_time_ms": 819.645,
+      "latency_p95_ms": 80.619,
+      "latency_p99_ms": 372.183
     },
     {
       "run": 3,
-      "tps": 4378.971662,
-      "transactions": 2624245,
+      "tps": 4389.413427,
+      "transactions": 2630400,
       "failed_transactions": 0,
-      "latency_avg_ms": 58.44,
-      "latency_stddev_ms": 108.227,
-      "initial_connection_time_ms": 836.661
+      "latency_avg_ms": 58.302,
+      "latency_stddev_ms": 107.357,
+      "initial_connection_time_ms": 825.810,
+      "latency_p95_ms": 79.916,
+      "latency_p99_ms": 344.112
     }
   ]
 }
