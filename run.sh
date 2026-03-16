@@ -17,14 +17,15 @@ set -euo pipefail
 # Config (edit as needed)
 ############################
 SYSTEM_NAME=${SYSTEM_NAME:-"Postgres by ClickHouse ☁️ (aws)"}
-MACHINE_DESC=${MACHINE_DESC:-"8 GiB, aws"}
+INSTANCE_LABEL=${INSTANCE_LABEL:-"Large"}        # e.g. "Small", "Large"
+INSTANCE_TYPE=${INSTANCE_TYPE:-"m6id.4xlarge"}   # e.g. "m6id.4xlarge", "Serverless"
+VCPUS=${VCPUS:?VCPUS is required (e.g. VCPUS=16)}
+RAM_GB=${RAM_GB:?RAM_GB is required (e.g. RAM_GB=64)}
+DISK_GB=${DISK_GB:-"950"}        # GB as integer; leave empty ("") for managed/serverless
+STORAGE_TYPE=${STORAGE_TYPE:-"NVMe"}  # e.g. "NVMe", "GP3 (16K IOPS)"; leave empty ("") if unspecified
 CLUSTER_SIZE=${CLUSTER_SIZE:-1}
-PROPRIETARY=${PROPRIETARY:-"yes"}
 TUNED=${TUNED:-"no"}
 COMMENT=${COMMENT:-""}
-
-# Tags as a comma-separated list (no spaces unless you quote it)
-TAGS=${TAGS:-"PostgreSQL-compatible,OLTP,managed,aws"}
 
 # Connection
 PGHOST=${PGHOST:-"localhost"}
@@ -180,29 +181,40 @@ done
 # 3) Assemble JSON
 ############################
 RESULTS_JSON=$(printf '%s\n' "${RUN_JSONS[@]}" | jq -s '.')
-TAGS_JSON=$(printf '%s' "$TAGS" | jq -Rc 'split(",")')
 
 jq -n \
-  --arg     system   "$SYSTEM_NAME"       \
-  --arg     date     "$DATE_STR"          \
-  --arg     machine  "$MACHINE_DESC"      \
-  --argjson cluster  "$CLUSTER_SIZE"      \
-  --arg     prop     "$PROPRIETARY"       \
-  --arg     tuned    "$TUNED"             \
-  --arg     comment  "$COMMENT"           \
-  --argjson tags     "$TAGS_JSON"         \
-  --arg     pgver    "$PG_VERSION"        \
-  --argjson scale    "$SCALE_FACTOR"      \
-  --argjson clients  "$CLIENTS"           \
-  --argjson threads  "$THREADS"           \
-  --argjson duration "$DURATION"  \
-  --arg     qmode    "$QUERY_MODE"        \
-  --argjson loadtime "$LOAD_TIME_SECONDS" \
-  --argjson results  "$RESULTS_JSON"      \
+  --arg     system        "$SYSTEM_NAME"       \
+  --arg     date          "$DATE_STR"          \
+  --arg     inst_label    "$INSTANCE_LABEL"    \
+  --arg     inst_type     "$INSTANCE_TYPE"     \
+  --argjson vcpus         "$VCPUS"             \
+  --argjson ram_gb        "$RAM_GB"            \
+  --arg     disk_gb       "$DISK_GB"           \
+  --arg     storage_type  "$STORAGE_TYPE"      \
+  --argjson cluster       "$CLUSTER_SIZE"      \
+  --arg     tuned         "$TUNED"             \
+  --arg     comment       "$COMMENT"           \
+  --arg     pgver         "$PG_VERSION"        \
+  --argjson scale         "$SCALE_FACTOR"      \
+  --argjson clients       "$CLIENTS"           \
+  --argjson threads       "$THREADS"           \
+  --argjson duration      "$DURATION"          \
+  --arg     qmode         "$QUERY_MODE"        \
+  --argjson loadtime      "$LOAD_TIME_SECONDS" \
+  --argjson results       "$RESULTS_JSON"      \
   '{
-    system: $system, date: $date, machine: $machine,
-    cluster_size: $cluster, proprietary: $prop, tuned: $tuned, comment: $comment,
-    tags: $tags, postgres_version: $pgver,
+    system: $system, date: $date,
+    instance: {
+      label: $inst_label,
+      type: $inst_type,
+      vcpus: $vcpus,
+      ram_gb: $ram_gb,
+      disk_gb: (if $disk_gb == "" then null else ($disk_gb | tonumber) end),
+      storage_type: (if $storage_type == "" then null else $storage_type end)
+    },
+    machine: "\($vcpus)vCPU, \($ram_gb)GB RAM",
+    cluster_size: $cluster, tuned: $tuned, comment: $comment,
+    postgres_version: $pgver,
     benchmark: {
       tool: "pgbench", workload: "TPC-B (built-in)",
       scale_factor: $scale, clients: $clients, threads: $threads,

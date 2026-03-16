@@ -295,6 +295,12 @@
             margin-left: 0.5rem;
         }
 
+        .tooltip-instance {
+            white-space: pre;
+            font-family: monospace;
+            font-size: 90%;
+        }
+
         .nowrap {
             text-wrap: none;
         }
@@ -342,12 +348,6 @@
             </td>
         </tr>
         <tr>
-            <th>Type: </th>
-            <td id="selectors_type">
-                <a id="select-all-types" class="selector selector-active">All</a>
-            </td>
-        </tr>
-        <tr>
             <th>Machine: </th>
             <td id="selectors_machine">
                 <a id="select-all-machines" class="selector selector-active">All</a>
@@ -366,13 +366,6 @@
             </td>
         </tr>
         <tr>
-            <th>Open source: </th>
-            <td id="selectors_opensource">
-                <a id="selector-opensource-yes" class="selector selector-active">Yes</a>
-                <a id="selector-opensource-no" class="selector selector-active">No</a>
-            </td>
-        </tr>
-        <tr>
             <th>Metric: </th>
             <td id="selectors_run">
                 <a class="selector selector-active" id="selector-metric-tps">TPS</a>
@@ -382,6 +375,13 @@
                 <a class="selector" id="selector-metric-latency_p99">P99 Latency</a>
                 <a class="selector" id="selector-metric-failed_transactions">Failed Tx</a>
                 <a class="selector" id="selector-metric-load_time">Load Time</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Run: </th>
+            <td id="selectors_run_type">
+                <a class="selector" id="selector-run-cold">Cold</a>
+                <a class="selector selector-active" id="selector-run-hot">Hot</a>
             </td>
         </tr>
     </table>
@@ -422,12 +422,11 @@
 
         let selectors = {
             "system": {},
-            "type": {},
             "machine": {},
             "data_size": {},
             "postgres_version": {},
-            "opensource": { "yes": true, "no": true },
             "metric": "tps",
+            "run_type": "hot",
             "queries": [],
         };
 
@@ -451,7 +450,6 @@
         /// Generate selectors
 
         let systems = document.getElementById('selectors_system');
-        let types = document.getElementById('selectors_type');
         let machines = document.getElementById('selectors_machine');
         let data_sizes = document.getElementById('selectors_data_size');
         let postgres_versions = document.getElementById('selectors_postgres_version');
@@ -511,16 +509,7 @@
             });
         });
 
-        [... new Set(data.map(elem => elem.tags).flat())].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).map(elem => {
-            let selector = document.createElement('a');
-            selector.className = 'selector selector-active';
-            selector.appendChild(document.createTextNode(elem));
-            types.appendChild(selector);
-            selectors.type[elem] = true;
-            selector.addEventListener('click', e => toggle(e, elem, selectors.type));
-        });
-
-        [... new Set(data.map(elem => elem.machine))].sort((a, b) => {
+[... new Set(data.map(elem => elem.machine))].sort((a, b) => {
             const count_diff = data.filter(elem => elem.machine === b).length - data.filter(elem => elem.machine === a).length;
             return count_diff == 0 ? a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }) : count_diff;
         }).map(elem => {
@@ -556,30 +545,7 @@
                 selector.addEventListener('click', e => toggle(e, version, selectors.postgres_version));
             });
 
-        document.getElementById('selector-opensource-yes').addEventListener('click', e => {
-            selectors.opensource.yes = !selectors.opensource.yes;
-            if (selectors.opensource.yes) {
-                e.target.classList.add('selector-active');
-            } else {
-                e.target.classList.remove('selector-active');
-            }
-            render();
-            updateHistory();
-        });
-
-        document.getElementById('selector-opensource-no').addEventListener('click', e => {
-            selectors.opensource.no = !selectors.opensource.no;
-            if (selectors.opensource.no) {
-                e.target.classList.add('selector-active');
-            } else {
-                e.target.classList.remove('selector-active');
-            }
-            render();
-            updateHistory();
-        });
-
         document.getElementById('select-all-systems').addEventListener('click', e => toggleAll(e, selectors.system));
-        document.getElementById('select-all-types').addEventListener('click', e => toggleAll(e, selectors.type));
         document.getElementById('select-all-machines').addEventListener('click', e => toggleAll(e, selectors.machine));
         document.getElementById('select-all-data-sizes').addEventListener('click', e => toggleAll(e, selectors.data_size));
         document.getElementById('select-all-postgres-versions').addEventListener('click', e => toggleAll(e, selectors.postgres_version));
@@ -643,7 +609,6 @@
                 }
                 
                 process('system', systems);
-                process('tags', types);
                 process('machine', machines);
         }
 
@@ -671,6 +636,16 @@
             return 60 + Math.abs(x % 240);
         }
 
+        function buildInstanceTooltip(inst) {
+            let lines = [];
+            if (inst.type)         lines.push(`Instance: ${inst.type}`);
+            lines.push(`vCPUs:    ${inst.vcpus}`);
+            lines.push(`RAM:      ${inst.ram_gb} GB`);
+            lines.push(`Storage size: ${inst.disk_gb != null ? inst.disk_gb + ' GB' : 'N/A'}`);
+            lines.push(`Storage type: ${inst.storage_type ?? 'N/A'}`);
+            return lines.join('\n');
+        }
+
         function renderSummary(filtered_data) {
             let table = document.getElementById('summary');
             clearElement(table);
@@ -684,7 +659,6 @@
                 if (metric === 'load_time') return result.load?.load_time_seconds || 0;
                 if (!result.results || result.results.length === 0) return 0;
 
-                // Compute average over runs
                 const values = result.results.map(r => {
                     if (metric === 'tps') return r.tps;
                     if (metric === 'latency_avg') return r.latency_avg_ms;
@@ -695,8 +669,14 @@
                     return 0;
                 });
 
-                const sum = values.reduce((a, b) => a + b, 0);
-                return sum / values.length;
+                // TPS: higher is better — hot = best = max, cold = worst = min
+                // Latency/failures: lower is better — hot = best = min, cold = worst = max
+                const higher_is_better = metric === 'tps';
+                if (selectors.run_type === 'hot') {
+                    return higher_is_better ? Math.max(...values) : Math.min(...values);
+                } else {
+                    return higher_is_better ? Math.min(...values) : Math.max(...values);
+                }
             };
 
 
@@ -711,7 +691,6 @@
 
             function updateSelectors() {
                 [...systems.childNodes].map(elem => { elem.className = selectors.system[elem.innerText] ? 'selector selector-active' : 'selector' });
-                [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
                 [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
                 [...data_sizes.childNodes].map(elem => { 
                     const gb_value = parseInt(elem.innerText); // Extract numeric value from "100 GB"
@@ -723,9 +702,10 @@
                     elem.className = elem.id == 'selector-metric-' + selectors.metric ? 'selector selector-active' : 'selector'
                 });
 
+                document.getElementById('selector-run-hot').className = selectors.run_type === 'hot' ? 'selector selector-active' : 'selector';
+                document.getElementById('selector-run-cold').className = selectors.run_type === 'cold' ? 'selector selector-active' : 'selector';
 
-                document.getElementById('selector-opensource-yes').className = selectors.opensource.yes ? 'selector selector-active' : 'selector';
-                document.getElementById('selector-opensource-no').className = selectors.opensource.no ? 'selector selector-active' : 'selector';
+
             }
 
             
@@ -794,12 +774,24 @@
                 td_name.className = 'summary-name';
 
                 if (!elem.fake) {
+                    let note = document.createElement('span');
+                    note.className = 'note';
+
                     let link = document.createElement('a');
                     const scale_factor = elem.benchmark?.scale_factor ? `, ${elem.benchmark.scale_factor}` : '';
                     link.appendChild(document.createTextNode(`${elem.system} (${elem.machine}${scale_factor})`));
                     link.href = "https://github.com/ClickHouse/otlpBench/blob/main/" + elem.source;
-                    link.style.color = `oklch(var(--hashed-link-lightness) 0.2018 ${nameToColor(elem.system.split(' ')[0])})`
-                    td_name.appendChild(link);
+                    link.style.color = `oklch(var(--hashed-link-lightness) 0.2018 ${nameToColor(elem.system.split(' ')[0])})`;
+                    note.appendChild(link);
+
+                    if (elem.instance) {
+                        let tooltip = document.createElement('span');
+                        tooltip.className = 'tooltip tooltip-result tooltip-instance';
+                        tooltip.appendChild(document.createTextNode(buildInstanceTooltip(elem.instance)));
+                        note.appendChild(tooltip);
+                    }
+
+                    td_name.appendChild(note);
                 } else {
                     td_name.appendChild(document.createTextNode(elem.system));
                 }
@@ -856,10 +848,20 @@
         document.getElementById('selector-metric-failed_transactions').addEventListener('click', e => { selectors.metric = 'failed_transactions'; render(); updateHistory(); });
         document.getElementById('selector-metric-load_time').addEventListener('click', e => { selectors.metric = 'load_time'; render(); updateHistory(); });
 
+        document.getElementById('selector-run-hot').addEventListener('click', e => {
+            selectors.run_type = 'hot';
+            [...e.target.parentElement.querySelectorAll('a')].map(btn => { btn.className = btn === e.target ? 'selector selector-active' : 'selector'; });
+            render(); updateHistory();
+        });
+        document.getElementById('selector-run-cold').addEventListener('click', e => {
+            selectors.run_type = 'cold';
+            [...e.target.parentElement.querySelectorAll('a')].map(btn => { btn.className = btn === e.target ? 'selector selector-active' : 'selector'; });
+            render(); updateHistory();
+        });
+
 
         function updateSelectors() {
             [...systems.childNodes].map(elem => { elem.className = selectors.system[elem.innerText] ? 'selector selector-active' : 'selector' });
-            [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
             [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
             [...data_sizes.childNodes].map(elem => { 
                 const gb_value = parseInt(elem.innerText); // Extract numeric value from "100 GB"
@@ -872,8 +874,6 @@
             });
 
 
-            document.getElementById('selector-opensource-yes').className = selectors.opensource.yes ? 'selector selector-active' : 'selector';
-            document.getElementById('selector-opensource-no').className = selectors.opensource.no ? 'selector selector-active' : 'selector';
         }
 
         function colorize(elem, ratio) {
@@ -941,9 +941,7 @@
                 selectors.system[elem.system] &&
                 selectors.machine[elem.machine] &&
                 selectors.data_size[scaleFactorToGB(elem.benchmark.scale_factor)] &&
-                (!elem.postgres_version || selectors.postgres_version[extractVersion(elem.postgres_version)]) &&
-                elem.tags.filter(type => selectors.type[type]).length > 0 &&
-                ((selectors.opensource.yes && elem.proprietary === "no") || (selectors.opensource.no && elem.proprietary === "yes"))
+                (!elem.postgres_version || selectors.postgres_version[extractVersion(elem.postgres_version)])
             );
 
 
@@ -1144,9 +1142,7 @@
         window.onpopstate = function (event) {
             if (!event.state) { return; }
             selectors = event.state;
-            if (!selectors.opensource) {
-                selectors.opensource = { "yes": true, "no": false };
-            }
+
             updateSelectors();
             render();
         };

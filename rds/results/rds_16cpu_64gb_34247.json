@@ -2,16 +2,17 @@
   "system": "AWS RDS",
   "date": "2026-03-11",
   "machine": "16vCPU, 64GB RAM",
+  "instance": {
+    "label": "Large",
+    "type": "db.m5.4xlarge",
+    "vcpus": 16,
+    "ram_gb": 64,
+    "disk_gb": 1000,
+    "storage_type": "GP3 (16K IOPS)"
+  },
   "cluster_size": 1,
-  "proprietary": "yes",
   "tuned": "no",
   "comment": "",
-  "tags": [
-    "PostgreSQL-compatible",
-    "OLTP",
-    "managed",
-    "aws"
-  ],
   "postgres_version": "18.3",
   "benchmark": {
     "tool": "pgbench",

@@ -2,16 +2,17 @@
   "system": "Crunchy",
   "date": "2026-03-12",
   "machine": "4vCPU, 16GB RAM",
+  "instance": {
+    "label": "Small",
+    "type": "Serverless",
+    "vcpus": 4,
+    "ram_gb": 16,
+    "disk_gb": null,
+    "storage_type": null
+  },
   "cluster_size": 1,
-  "proprietary": "yes",
   "tuned": "no",
   "comment": "",
-  "tags": [
-    "PostgreSQL-compatible",
-    "OLTP",
-    "managed",
-    "aws"
-  ],
   "postgres_version": "18.3",
   "benchmark": {
     "tool": "pgbench",

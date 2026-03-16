@@ -2,16 +2,17 @@
   "system": "Postgres by Clickhouse",
   "date": "2026-03-11",
   "machine": "4vCPU, 16GB RAM",
+  "instance": {
+    "label": "Small",
+    "type": "m8gd.xlarge",
+    "vcpus": 4,
+    "ram_gb": 16,
+    "disk_gb": 237,
+    "storage_type": "NVMe"
+  },
   "cluster_size": 1,
-  "proprietary": "yes",
   "tuned": "no",
   "comment": "",
-  "tags": [
-    "PostgreSQL-compatible",
-    "OLTP",
-    "managed",
-    "aws"
-  ],
   "postgres_version": "18.3 (Ubuntu 18.3-1.pgdg22.04+1)",
   "benchmark": {
     "tool": "pgbench",
