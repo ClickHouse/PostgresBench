@@ -1,15 +1,15 @@
 {
   "system": "AWS Aurora",
-  "date": "2026-03-11",
-  "machine": "4vCPU, 32GB RAM",
+  "date": "2026-03-17",
   "instance": {
     "label": "Small",
-    "type": "db.r5.xlarge",
+    "type": "db.r6gd.xlarge",
     "vcpus": 4,
     "ram_gb": 32,
-    "disk_gb": null,
-    "storage_type": "EBS (4750 Mbps)"
+    "instance_storage": "237 GB - NVMe",
+    "primary_storage": "Aurora storage"
   },
+  "machine": "4vCPU, 32GB RAM",
   "cluster_size": 1,
   "tuned": "no",
   "comment": "",
@@ -24,41 +24,41 @@
     "query_mode": "prepared"
   },
   "load": {
-    "load_time_seconds": 1518.514
+    "load_time_seconds": 1901.045
   },
   "results": [
     {
       "run": 1,
-      "tps": 2159.100510,
-      "transactions": 1294733,
+      "tps": 2381.171828,
+      "transactions": 1426410,
       "failed_transactions": 0,
-      "latency_avg_ms": 118.511,
-      "latency_stddev_ms": 38.803,
-      "initial_connection_time_ms": 722.621,
-      "latency_p95_ms": 188.526,
-      "latency_p99_ms": 237.306
+      "latency_avg_ms": 107.436,
+      "latency_stddev_ms": 52.956,
+      "initial_connection_time_ms": 1416.145,
+      "latency_p95_ms": 186.155,
+      "latency_p99_ms": 325.965
     },
     {
       "run": 2,
-      "tps": 2249.478526,
-      "transactions": 1348895,
+      "tps": 2555.968968,
+      "transactions": 1530607,
       "failed_transactions": 0,
-      "latency_avg_ms": 113.763,
-      "latency_stddev_ms": 36.924,
-      "initial_connection_time_ms": 687.077,
-      "latency_p95_ms": 180.937,
-      "latency_p99_ms": 228.097
+      "latency_avg_ms": 100.097,
+      "latency_stddev_ms": 49.033,
+      "initial_connection_time_ms": 1594.873,
+      "latency_p95_ms": 174.066,
+      "latency_p99_ms": 310.361
     },
     {
       "run": 3,
-      "tps": 2302.622413,
-      "transactions": 1380597,
+      "tps": 2685.187118,
+      "transactions": 1609934,
       "failed_transactions": 0,
-      "latency_avg_ms": 111.134,
-      "latency_stddev_ms": 35.563,
-      "initial_connection_time_ms": 716.814,
-      "latency_p95_ms": 176.107,
-      "latency_p99_ms": 223.508
+      "latency_avg_ms": 95.297,
+      "latency_stddev_ms": 46.988,
+      "initial_connection_time_ms": 792.265,
+      "latency_p95_ms": 165.546,
+      "latency_p99_ms": 298.391
     }
   ]
 }

@@ -1,15 +1,15 @@
 {
   "system": "AWS RDS",
-  "date": "2026-03-11",
-  "machine": "16vCPU, 64GB RAM",
+  "date": "2026-03-17",
   "instance": {
     "label": "Large",
-    "type": "db.m5.4xlarge",
+    "type": "db.m8gd.4xlarge",
     "vcpus": 16,
     "ram_gb": 64,
-    "disk_gb": 1000,
-    "storage_type": "GP3 (16K IOPS)"
+    "instance_storage": "950 GB - NVMe",
+    "primary_storage": "1000 GB - GP3 (16K IOPS)"
   },
+  "machine": "16vCPU, 64GB RAM",
   "cluster_size": 1,
   "tuned": "no",
   "comment": "",
@@ -24,41 +24,41 @@
     "query_mode": "prepared"
   },
   "load": {
-    "load_time_seconds": 4996.027
+    "load_time_seconds": 3997.883
   },
   "results": [
     {
       "run": 1,
-      "tps": 5704.154370,
-      "transactions": 3418329,
+      "tps": 5091.635987,
+      "transactions": 3051314,
       "failed_transactions": 0,
-      "latency_avg_ms": 44.857,
-      "latency_stddev_ms": 30.369,
-      "initial_connection_time_ms": 815.927,
-      "latency_p95_ms": 74.135,
-      "latency_p99_ms": 97.853
+      "latency_avg_ms": 50.239,
+      "latency_stddev_ms": 24.895,
+      "initial_connection_time_ms": 802.455,
+      "latency_p95_ms": 88.656,
+      "latency_p99_ms": 117.905
     },
     {
       "run": 2,
-      "tps": 4368.034368,
-      "transactions": 2617635,
+      "tps": 4635.865681,
+      "transactions": 2778015,
       "failed_transactions": 0,
-      "latency_avg_ms": 58.585,
-      "latency_stddev_ms": 107.702,
-      "initial_connection_time_ms": 819.645,
-      "latency_p95_ms": 80.619,
-      "latency_p99_ms": 372.183
+      "latency_avg_ms": 55.185,
+      "latency_stddev_ms": 24.236,
+      "initial_connection_time_ms": 801.784,
+      "latency_p95_ms": 96.001,
+      "latency_p99_ms": 130.039
     },
     {
       "run": 3,
-      "tps": 4389.413427,
-      "transactions": 2630400,
+      "tps": 4362.124768,
+      "transactions": 2614130,
       "failed_transactions": 0,
-      "latency_avg_ms": 58.302,
-      "latency_stddev_ms": 107.357,
-      "initial_connection_time_ms": 825.810,
-      "latency_p95_ms": 79.916,
-      "latency_p99_ms": 344.112
+      "latency_avg_ms": 58.646,
+      "latency_stddev_ms": 24.902,
+      "initial_connection_time_ms": 815.989,
+      "latency_p95_ms": 101.880,
+      "latency_p99_ms": 131.338
     }
   ]
 }

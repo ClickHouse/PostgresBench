@@ -641,8 +641,8 @@
             if (inst.type)         lines.push(`Instance: ${inst.type}`);
             lines.push(`vCPUs:    ${inst.vcpus}`);
             lines.push(`RAM:      ${inst.ram_gb} GB`);
-            lines.push(`Storage size: ${inst.disk_gb != null ? inst.disk_gb + ' GB' : 'N/A'}`);
-            lines.push(`Storage type: ${inst.storage_type ?? 'N/A'}`);
+            lines.push(`Instance storage: ${inst.instance_storage ?? 'N/A'}`);
+            lines.push(`Primary storage:  ${inst.primary_storage ?? 'N/A'}`);
             return lines.join('\n');
         }
 

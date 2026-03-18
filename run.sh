@@ -21,8 +21,8 @@ INSTANCE_LABEL=${INSTANCE_LABEL:-"Large"}        # e.g. "Small", "Large"
 INSTANCE_TYPE=${INSTANCE_TYPE:-"m6id.4xlarge"}   # e.g. "m6id.4xlarge", "Serverless"
 VCPUS=${VCPUS:?VCPUS is required (e.g. VCPUS=16)}
 RAM_GB=${RAM_GB:?RAM_GB is required (e.g. RAM_GB=64)}
-DISK_GB=${DISK_GB:-"950"}        # GB as integer; leave empty ("") for managed/serverless
-STORAGE_TYPE=${STORAGE_TYPE:-"NVMe"}  # e.g. "NVMe", "GP3 (16K IOPS)"; leave empty ("") if unspecified
+INSTANCE_STORAGE=${INSTANCE_STORAGE:-"950 GB - NVMe"}  # e.g. "950 GB - NVMe"; leave empty ("") for serverless/N/A
+PRIMARY_STORAGE=${PRIMARY_STORAGE:-"NVMe"}             # e.g. "NVMe", "1000 GB - GP3 (16K IOPS)", "Aurora storage"; leave empty ("") for N/A
 CLUSTER_SIZE=${CLUSTER_SIZE:-1}
 TUNED=${TUNED:-"no"}
 COMMENT=${COMMENT:-""}
@@ -189,8 +189,8 @@ jq -n \
   --arg     inst_type     "$INSTANCE_TYPE"     \
   --argjson vcpus         "$VCPUS"             \
   --argjson ram_gb        "$RAM_GB"            \
-  --arg     disk_gb       "$DISK_GB"           \
-  --arg     storage_type  "$STORAGE_TYPE"      \
+  --arg     inst_storage   "$INSTANCE_STORAGE"  \
+  --arg     prim_storage  "$PRIMARY_STORAGE"   \
   --argjson cluster       "$CLUSTER_SIZE"      \
   --arg     tuned         "$TUNED"             \
   --arg     comment       "$COMMENT"           \
@@ -209,8 +209,8 @@ jq -n \
       type: $inst_type,
       vcpus: $vcpus,
       ram_gb: $ram_gb,
-      disk_gb: (if $disk_gb == "" then null else ($disk_gb | tonumber) end),
-      storage_type: (if $storage_type == "" then null else $storage_type end)
+      instance_storage: (if $inst_storage == "" then null else $inst_storage end),
+      primary_storage: (if $prim_storage == "" then null else $prim_storage end)
     },
     machine: "\($vcpus)vCPU, \($ram_gb)GB RAM",
     cluster_size: $cluster, tuned: $tuned, comment: $comment,

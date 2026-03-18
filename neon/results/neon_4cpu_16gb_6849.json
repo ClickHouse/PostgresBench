@@ -7,8 +7,8 @@
     "type": "Serverless",
     "vcpus": 4,
     "ram_gb": 16,
-    "disk_gb": null,
-    "storage_type": null
+    "instance_storage": null,
+    "primary_storage": null
   },
   "cluster_size": 1,
   "tuned": "no",

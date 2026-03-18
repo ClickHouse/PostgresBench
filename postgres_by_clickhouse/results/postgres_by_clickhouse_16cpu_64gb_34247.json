@@ -1,15 +1,15 @@
 {
   "system": "Postgres by Clickhouse",
-  "date": "2026-03-10",
-  "machine": "16vCPU, 64GB RAM",
+  "date": "2026-03-18",
   "instance": {
     "label": "Large",
-    "type": "m6id.4xlarge",
+    "type": "m8gd.4xlarge",
     "vcpus": 16,
     "ram_gb": 64,
-    "disk_gb": 950,
-    "storage_type": "NVMe"
+    "instance_storage": "950 GB - NVMe",
+    "primary_storage": "NVMe"
   },
+  "machine": "16vCPU, 64GB RAM",
   "cluster_size": 1,
   "tuned": "no",
   "comment": "",
@@ -24,41 +24,41 @@
     "query_mode": "prepared"
   },
   "load": {
-    "load_time_seconds": 3442.978
+    "load_time_seconds": 2634.875
   },
   "results": [
     {
       "run": 1,
-      "tps": 15909.886062,
-      "transactions": 9534869,
+      "tps": 25885.015554,
+      "transactions": 15514715,
       "failed_transactions": 0,
-      "latency_avg_ms": 16.067,
-      "latency_stddev_ms": 11.997,
-      "initial_connection_time_ms": 759.699,
-      "latency_p95_ms": 51.091,
-      "latency_p99_ms": 55.179
+      "latency_avg_ms": 9.869,
+      "latency_stddev_ms": 1.309,
+      "initial_connection_time_ms": 675.325,
+      "latency_p95_ms": 11.721,
+      "latency_p99_ms": 13.305
     },
     {
       "run": 2,
-      "tps": 20113.538979,
-      "transactions": 12053617,
+      "tps": 26101.674175,
+      "transactions": 15644811,
       "failed_transactions": 0,
-      "latency_avg_ms": 12.710,
-      "latency_stddev_ms": 5.641,
-      "initial_connection_time_ms": 767.597,
-      "latency_p95_ms": 22.701,
-      "latency_p99_ms": 30.824
+      "latency_avg_ms": 9.787,
+      "latency_stddev_ms": 1.359,
+      "initial_connection_time_ms": 672.113,
+      "latency_p95_ms": 11.604,
+      "latency_p99_ms": 13.261
     },
     {
       "run": 3,
-      "tps": 20830.346948,
-      "transactions": 12483546,
+      "tps": 26327.728271,
+      "transactions": 15780644,
       "failed_transactions": 0,
-      "latency_avg_ms": 12.272,
-      "latency_stddev_ms": 5.193,
-      "initial_connection_time_ms": 766.174,
-      "latency_p95_ms": 22.054,
-      "latency_p99_ms": 29.071
+      "latency_avg_ms": 9.703,
+      "latency_stddev_ms": 1.323,
+      "initial_connection_time_ms": 656.672,
+      "latency_p95_ms": 11.402,
+      "latency_p99_ms": 13.197
     }
   ]
 }
