@@ -1,4 +1,4 @@
-# OLTPBench: a Benchmark For Postgres-Compatible Databases
+# PostgresBench: A Reproducible Benchmark for Postgres Services
 
 ## Overview
 
@@ -21,7 +21,7 @@ The benchmark can be reproduced using the `run.sh` script, which automates the e
 
 ### Compatibility
 
-The benchmark uses the standard `pgbench` tool that comes with PostgreSQL, ensuring compatibility with:
+The benchmark uses the standard [`pgbench`](https://www.postgresql.org/docs/current/pgbench.html) tool that comes with PostgreSQL, ensuring compatibility with:
 - PostgreSQL and its forks
 - Postgres-compatible managed services (AWS RDS, Aurora, Google Cloud SQL, Azure Database for PostgreSQL, etc.)
 - Postgres wire protocol-compatible databases (CockroachDB, YugabyteDB, etc.)
@@ -53,7 +53,7 @@ Note these limitations:
 
 3. **Simple Schema**: The pgbench schema consists of four simple tables (accounts, branches, tellers, history). Real applications often have more complex schemas with many tables and relationships.
 
-4. **Network Latency**: Results may vary significantly based on network latency between the client and database, especially for managed cloud services. We recommend running the benchmark on the same region as the database for the most accurate results. 
+4. **Network Latency**: Results may vary significantly based on network latency between the client and database, especially for managed cloud services. We recommend running the benchmark on the same region as the database for the most accurate results.
 
 5. **Configuration Sensitivity**: Database performance is highly dependent on tuning parameters. Default configurations are used unless otherwise noted, which may not be optimal for every system.
 
@@ -69,7 +69,7 @@ Tl;dr: *Use these results as a general guide, not absolute truth*.
    ```bash
    # Ubuntu/Debian
    sudo apt-get install postgresql-client-18
-   
+
    # macOS (via Homebrew)
    brew install postgresql@18
    ```
@@ -92,15 +92,22 @@ export PGUSER="postgres"
 export PGPASSWORD="your-password"
 export PGDATABASE="postgres"
 
-# Optional: Configure benchmark parameters
-export SCALE_FACTOR=6849        # Database scale (default: 6849)
-export CLIENTS=256              # Number of concurrent clients (default: 256)
-export THREADS=16              # Number of threads (default: 16)
-export DURATION_SECONDS=600    # Duration of each run in seconds (default: 600)
+# Required: instance hardware details
+export VCPUS=16
+export RAM_GB=64
 
-# Optional: Configure metadata
+# Optional: instance metadata
 export SYSTEM_NAME="Postgres by ClickHouse"
-export MACHINE_DESC="16vCPU, 32GB RAM"
+export INSTANCE_LABEL="Large"             # e.g. "Small", "Large"
+export INSTANCE_TYPE="m8gd.4xlarge"       # instance type identifier
+export INSTANCE_STORAGE="950 GB - NVMe"  # local/instance storage; leave empty for N/A
+export PRIMARY_STORAGE="NVMe"            # primary storage description; leave empty for N/A
+
+# Optional: benchmark parameters
+export SCALE_FACTOR=6849    # Database scale (default: 6849)
+export CLIENTS=256          # Number of concurrent clients (default: 256)
+export THREADS=16           # Number of threads (default: 16)
+export DURATION=600         # Duration of each run in seconds (default: 600)
 
 # Run the benchmark
 ./run.sh
@@ -122,6 +129,8 @@ The output JSON file includes:
 - Results from 3 benchmark runs including:
   - Transactions per second (TPS)
   - Average latency (ms)
+  - P95 latency (ms)
+  - P99 latency (ms)
   - Latency standard deviation (ms)
   - Failed transactions
   - Initial connection time (ms)
@@ -130,36 +139,39 @@ The output JSON file includes:
 
 To contribute results for a different system or configuration:
 
-1. Create a directory for your system (e.g., `postgresql/`, `aurora/`, `yugabyte/`)
-2. Add a `README.md` with setup instructions
-3. Place result JSON files in a `results/` subdirectory
-4. Name files descriptively: `<system>_<hardware>_<scale>.json`
+1. Clone the benchmark repository
+2. Follow the documented infrastructure setup to match the tested instance specs
+3. Run `run.sh` with the published parameters
+4. Create a pull request to submit your results
 
-### Installation And Fine-Tuning
+### Configuration
 
-The systems can be installed or used in any reasonable way: from a binary distribution, from a Docker container, from the package manager, or compiled - whatever is more natural and simple or gives better results.
+Each service should be tested using its out-of-the-box Postgres configuration. This reflects typical user behavior, where most expect good performance without manual tuning.
 
-It's better to use the default settings and avoid fine-tuning. Configuration changes can be applied if it is considered strictly necessary and documented.
-
-Fine-tuning and optimization for the benchmark are not recommended but allowed.
-In this case, add results for the vanilla configuration and tunes results separately (e.g. 'MyDatabase' and 'MyDatabase-tuned')
+If configuration changes are made, they must be documented and submitted alongside the results. In that case, also include a vanilla (untuned) result so both can be compared (e.g. `MyService` and `MyService-tuned`).
 
 ## Benchmark Methodology
+
+### Client Machine
+
+We used a 16 vCPU, 64 GB EC2 instance to run the benchmark client, sized to ensure the client is never the bottleneck. All services were tested in the same region (us-east-2), so results reflect only database performance, not cross-region network latency.
 
 ### Data Generation
 
 The benchmark uses `pgbench -i` to initialize the database with synthetic data. The amount of data is controlled by the scale factor:
 
-- **Scale Factor**: Determines the number of rows in the main table
-  - Scale 1 = 100,000 accounts
-  - Scale 100 = 10,000,000 accounts
-  - Total database size is roughly equals to scale × 16 MB
+At a scale factor of 1, the tables contain the following number of rows (all multiplied by the scale factor):
 
-The schema consists of four tables:
-- `pgbench_accounts`: Main table with account balances
-- `pgbench_branches`: Branch information
-- `pgbench_tellers`: Teller information
-- `pgbench_history`: Transaction history
+```
+table                   # of rows
+---------------------------------
+pgbench_branches        1
+pgbench_tellers         10
+pgbench_accounts        100000
+pgbench_history         0
+```
+
+We tested two scale factors: 6849 (~100 GB) and 34247 (~500 GB). These correspond to dataset sizes typical of real Postgres deployments: one where the working set might partially warm in buffer cache over time, and one where it clearly cannot.
 
 ### Workload
 
@@ -182,7 +194,7 @@ The benchmark executes **3 consecutive runs** with the same parameters. This all
 - Effect of warm caches after the first run
 - Statistical variation in performance
 
-The database is not restarted between runs to reflect real-world steady-state performance.
+The database is not restarted between runs to reflect real-world steady-state performance. We publish rankings for both the best run (hot) and worst run (cold).
 
 ### If The Results Cannot Be Published
 
@@ -210,7 +222,5 @@ We welcome all types of databases, including open-source and closed-source, comm
 - [x] Postgres by ClickHouse
 - [x] AWS RDS
 - [x] AWS Aurora
-- [] Neon 
-- [] Crunchy
-- [] Supabase
-
+- [x] Neon
+- [x] Crunchy
