@@ -4,11 +4,11 @@
   "machine": "16vCPU, 64GB RAM",
   "instance": {
     "label": "Large",
-    "type": "Serverless",
+    "type": "Standard-64",
     "vcpus": 16,
     "ram_gb": 64,
     "instance_storage": null,
-    "primary_storage": null
+    "primary_storage": "20,000 Baseline IOPS/40,000 Maximum IOPS"
   },
   "cluster_size": 1,
   "tuned": "no",

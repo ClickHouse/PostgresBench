@@ -780,7 +780,7 @@
                     let link = document.createElement('a');
                     const scale_factor = elem.benchmark?.scale_factor ? `, ${elem.benchmark.scale_factor}` : '';
                     link.appendChild(document.createTextNode(`${elem.system} (${elem.machine}${scale_factor})`));
-                    link.href = "https://github.com/ClickHouse/otlpBench/blob/main/" + elem.source;
+                    link.href = "https://github.com/ClickHouse/oltpBench/blob/main/" + elem.source;
                     link.style.color = `oklch(var(--hashed-link-lightness) 0.2018 ${nameToColor(elem.system.split(' ')[0])})`;
                     note.appendChild(link);
 
