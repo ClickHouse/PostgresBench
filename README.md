@@ -19,13 +19,6 @@ The benchmark can be reproduced using the `run.sh` script, which automates the e
 - Access to a Postgres-compatible database instance
 - Basic environment configuration (connection parameters)
 
-### Compatibility
-
-The benchmark uses the standard [`pgbench`](https://www.postgresql.org/docs/current/pgbench.html) tool that comes with PostgreSQL, ensuring compatibility with:
-- PostgreSQL and its forks
-- Postgres-compatible managed services (AWS RDS, Aurora, Google Cloud SQL, Azure Database for PostgreSQL, etc.)
-- Postgres wire protocol-compatible databases (CockroachDB, YugabyteDB, etc.)
-
 ### Standardization
 
 The benchmark uses the built-in TPC-B-like workload from pgbench, which provides:
@@ -61,7 +54,7 @@ Note these limitations:
 
 Tl;dr: *Use these results as a general guide, not absolute truth*.
 
-## How to Run the Benchmark
+## How to run the benchmark
 
 ### Prerequisites
 
@@ -80,7 +73,7 @@ Tl;dr: *Use these results as a general guide, not absolute truth*.
    - Database name
    - Username and password
 
-### Running the Benchmark
+### Running the benchmark
 
 The `run.sh` script automates the entire benchmark process:
 
@@ -119,7 +112,7 @@ The script will:
 3. Run the benchmark 3 times
 4. Generate a JSON file with all results
 
-### Results Format
+### Results format
 
 The output JSON file includes:
 - System information and configuration
@@ -135,14 +128,20 @@ The output JSON file includes:
   - Failed transactions
   - Initial connection time (ms)
 
-### Adding New Results
+### Adding new results
 
 To contribute results for a different system or configuration:
 
 1. Clone the benchmark repository
 2. Follow the documented infrastructure setup to match the tested instance specs
 3. Run `run.sh` with the published parameters
-4. Create a pull request to submit your results
+5. Create a pull request to submit your results
+
+## Benchmark methodology
+
+### Client machine
+
+The benchmark client must not be a bottleneck. We used a 16 vCPU / 64 GB EC2 instance for this purpose. All services were tested in us-east-2 alongside the client, so measured latency reflects only database behavior.
 
 ### Configuration
 
@@ -150,13 +149,7 @@ Each service should be tested using its out-of-the-box Postgres configuration. T
 
 If configuration changes are made, they must be documented and submitted alongside the results. In that case, also include a vanilla (untuned) result so both can be compared (e.g. `MyService` and `MyService-tuned`).
 
-## Benchmark Methodology
-
-### Client Machine
-
-We used a 16 vCPU, 64 GB EC2 instance to run the benchmark client, sized to ensure the client is never the bottleneck. All services were tested in the same region (us-east-2), so results reflect only database performance, not cross-region network latency.
-
-### Data Generation
+### Data generation
 
 The benchmark uses `pgbench -i` to initialize the database with synthetic data. The amount of data is controlled by the scale factor:
 
@@ -171,34 +164,23 @@ pgbench_accounts        100000
 pgbench_history         0
 ```
 
-We tested two scale factors: 6849 (~100 GB) and 34247 (~500 GB). These correspond to dataset sizes typical of real Postgres deployments: one where the working set might partially warm in buffer cache over time, and one where it clearly cannot.
+We tested two scale factors: 6849 (~100 GB) and 34247 (~500 GB). These correspond to dataset sizes typical of real Postgres deployments: one where the working set might partially warm in buffer cache over time, and one where it clearly cannot. 
 
-### Workload
+For consistency, we recommend future contributions to use similar scale factors. 
 
-The pgbench TPC-B workload performs the following operations in each transaction:
-1. UPDATE accounts - debit an account
-2. SELECT account balance
-3. UPDATE tellers - update teller balance
-4. UPDATE branches - update branch balance
-5. INSERT into history - record the transaction
-
-Each benchmark run executes this transaction pattern with configurable:
-- **Clients**: Number of concurrent database connections
-- **Threads**: Number of worker threads (should typically equal available CPU cores)
-- **Duration**: How long to run the benchmark (in seconds)
-
-### Multiple Runs
+### Multiple runs
 
 The benchmark executes **3 consecutive runs** with the same parameters. This allows measurement of:
 - Consistency across runs
 - Effect of warm caches after the first run
 - Statistical variation in performance
 
-The database is not restarted between runs to reflect real-world steady-state performance. We publish rankings for both the best run (hot) and worst run (cold).
+The database is not restarted between runs to reflect real-world steady-state performance. We publish rankings for both the best run and worst run.
 
-### If The Results Cannot Be Published
+### If the results cannot be published
 
 Some vendors don't allow publishing benchmark results due to the infamous [DeWitt Clause](https://cube.dev/blog/dewitt-clause-or-can-you-benchmark-a-database).
+
 Most of them still allow the use of the system for benchmarks.
 In this case, please submit the full information about installation and reproduction, but without `results` directory.
 A `.gitignore` file can be added to prevent accidental publishing.
@@ -207,10 +189,10 @@ We allow both open-source and proprietary systems in our benchmark, as well as m
 
 Please let us know if some results were published by mistake by opening an issue on GitHub.
 
-### If a Mistake Or Misrepresentation Is Found
+### If a mistake Or misrepresentation is found
 
-It is easy to accidentally misrepresent some systems.
-While acting in good faith, the authors admit their lack of deep knowledge of most systems.
+It is easy to accidentally misrepresent some systems. While acting in good faith, the authors admit their lack of deep knowledge of most systems.
+
 Please send a pull request to correct the mistakes.
 
 ## Add a new database
