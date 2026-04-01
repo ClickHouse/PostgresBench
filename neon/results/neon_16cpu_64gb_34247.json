@@ -3,7 +3,6 @@
   "date": "2026-03-11",
   "machine": "16vCPU, 64GB RAM",
   "instance": {
-    "label": "Large",
     "type": "Serverless",
     "vcpus": 16,
     "ram_gb": 64,

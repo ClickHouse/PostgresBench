@@ -17,7 +17,6 @@ set -euo pipefail
 # Config (edit as needed)
 ############################
 SYSTEM_NAME=${SYSTEM_NAME:-"Postgres by ClickHouse ☁️ (aws)"}
-INSTANCE_LABEL=${INSTANCE_LABEL:-"Large"}        # e.g. "Small", "Large"
 INSTANCE_TYPE=${INSTANCE_TYPE:-"m6id.4xlarge"}   # e.g. "m6id.4xlarge", "Serverless"
 VCPUS=${VCPUS:?VCPUS is required (e.g. VCPUS=16)}
 RAM_GB=${RAM_GB:?RAM_GB is required (e.g. RAM_GB=64)}
@@ -185,7 +184,6 @@ RESULTS_JSON=$(printf '%s\n' "${RUN_JSONS[@]}" | jq -s '.')
 jq -n \
   --arg     system        "$SYSTEM_NAME"       \
   --arg     date          "$DATE_STR"          \
-  --arg     inst_label    "$INSTANCE_LABEL"    \
   --arg     inst_type     "$INSTANCE_TYPE"     \
   --argjson vcpus         "$VCPUS"             \
   --argjson ram_gb        "$RAM_GB"            \
@@ -205,7 +203,6 @@ jq -n \
   '{
     system: $system, date: $date,
     instance: {
-      label: $inst_label,
       type: $inst_type,
       vcpus: $vcpus,
       ram_gb: $ram_gb,

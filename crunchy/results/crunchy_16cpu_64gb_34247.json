@@ -3,7 +3,6 @@
   "date": "2026-03-12",
   "machine": "16vCPU, 64GB RAM",
   "instance": {
-    "label": "Large",
     "type": "Standard-64",
     "vcpus": 16,
     "ram_gb": 64,

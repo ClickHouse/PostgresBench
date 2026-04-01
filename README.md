@@ -96,7 +96,6 @@ export RAM_GB=64
 
 # Optional: instance metadata
 export SYSTEM_NAME="Postgres by ClickHouse"
-export INSTANCE_LABEL="Large"             # e.g. "Small", "Large"
 export INSTANCE_TYPE="m8gd.4xlarge"       # instance type identifier
 export INSTANCE_STORAGE="950 GB - NVMe"  # local/instance storage; leave empty for N/A
 export PRIMARY_STORAGE="NVMe"            # primary storage description; leave empty for N/A

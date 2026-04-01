@@ -2,7 +2,6 @@
   "system": "AWS RDS",
   "date": "2026-03-17",
   "instance": {
-    "label": "Large",
     "type": "db.m8gd.4xlarge",
     "vcpus": 16,
     "ram_gb": 64,

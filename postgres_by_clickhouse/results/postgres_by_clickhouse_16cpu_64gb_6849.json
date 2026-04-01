@@ -2,7 +2,6 @@
   "system": "Postgres by Clickhouse",
   "date": "2026-03-17",
   "instance": {
-    "label": "Large",
     "type": "m8gd.4xlarge",
     "vcpus": 16,
     "ram_gb": 64,
