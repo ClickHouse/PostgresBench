@@ -58,13 +58,9 @@ Tl;dr: *Use these results as a general guide, not absolute truth*.
 
 ### Prerequisites
 
-1. **PostgreSQL Client Tools 18+**: Install the PostgreSQL client tools including `pgbench` and `psql`:
+1. **PostgreSQL 18+**: Install PostgreSQL 18 by following the [official PostgreSQL installation guide](https://www.postgresql.org/download/). Verify `pgbench` is correctly installed by running:
    ```bash
-   # Ubuntu/Debian
-   sudo apt-get install postgresql-client-18
-
-   # macOS (via Homebrew)
-   brew install postgresql@18
+   pgbench --version
    ```
 
 2. **jq**: Required for JSON output generation:
