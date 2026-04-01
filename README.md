@@ -67,7 +67,16 @@ Tl;dr: *Use these results as a general guide, not absolute truth*.
    brew install postgresql@18
    ```
 
-2. **Database Access**: You need connection details for your Postgres-compatible database:
+2. **jq**: Required for JSON output generation:
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get install jq
+
+   # macOS (via Homebrew)
+   brew install jq
+   ```
+
+3. **Database Access**: You need connection details for your Postgres-compatible database:
    - Hostname/IP address
    - Port (default: 5432)
    - Database name
@@ -102,6 +111,9 @@ export CLIENTS=256          # Number of concurrent clients (default: 256)
 export THREADS=16           # Number of threads (default: 16)
 export DURATION=600         # Duration of each run in seconds (default: 600)
 
+# Optional: output
+export OUT_JSON="results.json"   # Output file name (default: oltpbench_result.json)
+
 # Run the benchmark
 ./run.sh
 ```
@@ -135,7 +147,7 @@ To contribute results for a different system or configuration:
 1. Clone the benchmark repository
 2. Follow the documented infrastructure setup to match the tested instance specs
 3. Run `run.sh` with the published parameters
-5. Create a pull request to submit your results
+4. Create a pull request to submit your results
 
 ## Benchmark methodology
 
