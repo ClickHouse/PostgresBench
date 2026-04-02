@@ -352,7 +352,7 @@
     <div class="header stick-left">
         <span class="nowrap themes"><span id="toggle-dark">🌚</span><span id="toggle-light">🌞</span></span>
         <h1>PostgresBench — A Reproducible Benchmark for Postgres Services</h1>
-        <a href="https://github.com/ClickHouse/oltpBench/">Methodology</a> | <a href="https://github.com/ClickHouse/oltpBench/">Reproduce and Validate the Results</a> | <a href="https://github.com/ClickHouse/oltpBench/">Add a System</a> | See also: <a href="https://benchmark.clickhouse.com/">ClickBench</a>
+        <a href="https://github.com/ClickHouse/PostgresBench/">Methodology</a> | <a href="https://github.com/ClickHouse/PostgresBench/">Reproduce and Validate the Results</a> | <a href="https://github.com/ClickHouse/PostgresBench/">Add a System</a> | See also: <a href="https://benchmark.clickhouse.com/">ClickBench</a>
     </div>
 
     <table class="selectors-container stick-left">
@@ -651,13 +651,14 @@
             return 60 + Math.abs(x % 240);
         }
 
-        function buildInstanceTooltip(inst) {
+        function buildInstanceTooltip(inst, scale_factor) {
             let lines = [];
             if (inst.type)         lines.push(`Instance: ${inst.type}`);
             lines.push(`vCPUs:    ${inst.vcpus}`);
             lines.push(`RAM:      ${inst.ram_gb} GB`);
             lines.push(`Instance storage: ${inst.instance_storage ?? 'N/A'}`);
             lines.push(`Primary storage:  ${inst.primary_storage ?? 'N/A'}`);
+            if (scale_factor)      lines.push(`Dataset size:     ~${scaleFactorToGB(scale_factor)} GB (scale ${scale_factor})`);
             return lines.join('\n');
         }
 
@@ -793,16 +794,16 @@
                     note.className = 'note';
 
                     let link = document.createElement('a');
-                    const scale_factor = elem.benchmark?.scale_factor ? `, ${elem.benchmark.scale_factor}` : '';
-                    link.appendChild(document.createTextNode(`${elem.system} (${elem.machine}${scale_factor})`));
-                    link.href = "https://github.com/ClickHouse/oltpBench/blob/main/" + elem.source;
+                    const dataset_size = elem.benchmark?.scale_factor ? `, ~${scaleFactorToGB(elem.benchmark.scale_factor)} GB` : '';
+                    link.appendChild(document.createTextNode(`${elem.system} (${elem.machine}${dataset_size})`));
+                    link.href = "https://github.com/ClickHouse/PostgresBench/blob/main/" + elem.source;
                     link.style.color = `oklch(var(--hashed-link-lightness) 0.2018 ${nameToColor(elem.system.split(' ')[0])})`;
                     note.appendChild(link);
 
                     if (elem.instance) {
                         let tooltip = document.createElement('span');
                         tooltip.className = 'tooltip tooltip-result tooltip-instance';
-                        tooltip.appendChild(document.createTextNode(buildInstanceTooltip(elem.instance)));
+                        tooltip.appendChild(document.createTextNode(buildInstanceTooltip(elem.instance, elem.benchmark?.scale_factor)));
                         let footnote = document.createElement('span');
                         footnote.className = 'tooltip-footnote';
                         footnote.appendChild(document.createTextNode('Click to see raw results'));
