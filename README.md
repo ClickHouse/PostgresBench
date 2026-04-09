@@ -148,7 +148,7 @@ To contribute results for a different system or configuration:
 
 ### Client machine
 
-The benchmark client must not be a bottleneck. We used a 16 vCPU / 64 GB EC2 instance for this purpose. All services were tested in us-east-2 alongside the client, so measured latency reflects only database behavior.
+The benchmark client must not be a bottleneck. We used a 16 vCPU / 64 GB EC2 instance for this purpose (in particular m8gd.4xlarge). All services were tested in us-east-2 alongside the client, so measured latency reflects only database behavior.
 
 ### Configuration
 
