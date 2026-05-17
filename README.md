@@ -148,7 +148,9 @@ To contribute results for a different system or configuration:
 
 ### Client machine
 
-The benchmark client must not be a bottleneck. We used a 16 vCPU / 64 GB EC2 instance for this purpose. All services were tested in us-east-2 alongside the client, so measured latency reflects only database behavior.
+The benchmark client must not be a bottleneck. We used an m8i.4xlarge (16 vCPU, 64 GiB RAM) EC2 instance in us-east-2 for this purpose. The instance was assigned a public IP and connected directly to each database's public endpoint. Benchmarks were run using pgbench locally on the EC2 instance over the standard PostgreSQL interface.
+
+All services were tested in us-east-2 alongside the client, so measured latency reflects only database behavior.
 
 ### Configuration
 
