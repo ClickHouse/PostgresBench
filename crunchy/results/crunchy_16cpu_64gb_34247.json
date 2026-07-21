@@ -12,6 +12,8 @@
   "cluster_size": 1,
   "tuned": "no",
   "comment": "",
+  "cloud": "aws",
+  "region": "us-east-2",
   "postgres_version": "18.3",
   "benchmark": {
     "tool": "pgbench",

@@ -2,3 +2,5 @@ oltpbench_tmp
 data.generated.js.bak
 archive
 *.tar.gz
+ha/*
+.DS_Store

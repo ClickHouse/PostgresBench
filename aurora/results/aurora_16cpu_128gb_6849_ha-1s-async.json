@@ -1,0 +1,704 @@
+{
+  "system": "AWS Aurora",
+  "date": "2026-07-16",
+  "instance": {
+    "type": "db.r6g.4xlarge",
+    "vcpus": 16,
+    "ram_gb": 128,
+    "instance_storage": "950 GB - NVMe",
+    "primary_storage": "Aurora Standard storage"
+  },
+  "machine": "16vCPU, 128GB RAM",
+  "cluster_size": 1,
+  "tuned": "no",
+  "comment": "",
+  "cloud": "aws",
+  "region": "us-east-2",
+  "ha": {
+    "label": "HA – 1 standby – async",
+    "mode": "async",
+    "standbys": 1,
+    "live_settings": {
+      "synchronous_commit": "on",
+      "synchronous_standby_names": null
+    }
+  },
+  "postgres_version": "18.3",
+  "benchmark": {
+    "tool": "pgbench",
+    "workload": "TPC-B (built-in)",
+    "scale_factor": 6849,
+    "clients": 256,
+    "threads": 16,
+    "duration": 600,
+    "query_mode": "prepared",
+    "interval_seconds": 30
+  },
+  "load": {
+    "load_time_seconds": 829.969
+  },
+  "results": [
+    {
+      "run": 1,
+      "tps": 9993.1603,
+      "transactions": 5985903,
+      "failed_transactions": 0,
+      "latency_avg_ms": 25.6370,
+      "latency_stddev_ms": 9.6995,
+      "initial_connection_time_ms": 470.480,
+      "latency_p95_ms": 32.3490,
+      "latency_p99_ms": 47.7920,
+      "interval_seconds": 30,
+      "timeseries": [
+        {
+          "interval": 0,
+          "elapsed_s": 0,
+          "tps": 8792.9000,
+          "transactions": 263787,
+          "latency_avg_ms": 29.0647,
+          "latency_stddev_ms": 6.1110,
+          "latency_p95_ms": 35.7000,
+          "latency_p99_ms": 51.8570
+        },
+        {
+          "interval": 1,
+          "elapsed_s": 30,
+          "tps": 8917.1333,
+          "transactions": 267514,
+          "latency_avg_ms": 28.7023,
+          "latency_stddev_ms": 9.0787,
+          "latency_p95_ms": 34.8120,
+          "latency_p99_ms": 52.7380
+        },
+        {
+          "interval": 2,
+          "elapsed_s": 60,
+          "tps": 9024.6667,
+          "transactions": 270740,
+          "latency_avg_ms": 28.3645,
+          "latency_stddev_ms": 12.0085,
+          "latency_p95_ms": 33.5850,
+          "latency_p99_ms": 53.3700
+        },
+        {
+          "interval": 3,
+          "elapsed_s": 90,
+          "tps": 9292.4333,
+          "transactions": 278773,
+          "latency_avg_ms": 27.5500,
+          "latency_stddev_ms": 5.0976,
+          "latency_p95_ms": 33.5260,
+          "latency_p99_ms": 51.9350
+        },
+        {
+          "interval": 4,
+          "elapsed_s": 120,
+          "tps": 9267.7000,
+          "transactions": 278031,
+          "latency_avg_ms": 27.6223,
+          "latency_stddev_ms": 15.9730,
+          "latency_p95_ms": 32.9450,
+          "latency_p99_ms": 51.6690
+        },
+        {
+          "interval": 5,
+          "elapsed_s": 150,
+          "tps": 8627.0333,
+          "transactions": 258811,
+          "latency_avg_ms": 29.6723,
+          "latency_stddev_ms": 33.4621,
+          "latency_p95_ms": 32.7600,
+          "latency_p99_ms": 55.7200
+        },
+        {
+          "interval": 6,
+          "elapsed_s": 180,
+          "tps": 9677.3333,
+          "transactions": 290320,
+          "latency_avg_ms": 26.4372,
+          "latency_stddev_ms": 4.8339,
+          "latency_p95_ms": 32.2310,
+          "latency_p99_ms": 49.9750
+        },
+        {
+          "interval": 7,
+          "elapsed_s": 210,
+          "tps": 9722.8000,
+          "transactions": 291684,
+          "latency_avg_ms": 26.3356,
+          "latency_stddev_ms": 4.7764,
+          "latency_p95_ms": 32.0840,
+          "latency_p99_ms": 50.0280
+        },
+        {
+          "interval": 8,
+          "elapsed_s": 240,
+          "tps": 9909.1333,
+          "transactions": 297274,
+          "latency_avg_ms": 25.8337,
+          "latency_stddev_ms": 4.8833,
+          "latency_p95_ms": 32.3190,
+          "latency_p99_ms": 48.7620
+        },
+        {
+          "interval": 9,
+          "elapsed_s": 270,
+          "tps": 10030.6667,
+          "transactions": 300920,
+          "latency_avg_ms": 25.5094,
+          "latency_stddev_ms": 4.8961,
+          "latency_p95_ms": 31.5480,
+          "latency_p99_ms": 48.6670
+        },
+        {
+          "interval": 10,
+          "elapsed_s": 300,
+          "tps": 10119.3000,
+          "transactions": 303579,
+          "latency_avg_ms": 25.2869,
+          "latency_stddev_ms": 4.9934,
+          "latency_p95_ms": 31.6340,
+          "latency_p99_ms": 48.3370
+        },
+        {
+          "interval": 11,
+          "elapsed_s": 330,
+          "tps": 10521.2333,
+          "transactions": 315637,
+          "latency_avg_ms": 24.3404,
+          "latency_stddev_ms": 4.9085,
+          "latency_p95_ms": 30.6740,
+          "latency_p99_ms": 46.3110
+        },
+        {
+          "interval": 12,
+          "elapsed_s": 360,
+          "tps": 10485.2667,
+          "transactions": 314558,
+          "latency_avg_ms": 24.4103,
+          "latency_stddev_ms": 4.8632,
+          "latency_p95_ms": 30.8950,
+          "latency_p99_ms": 46.3560
+        },
+        {
+          "interval": 13,
+          "elapsed_s": 390,
+          "tps": 10648.7000,
+          "transactions": 319461,
+          "latency_avg_ms": 24.0386,
+          "latency_stddev_ms": 4.7238,
+          "latency_p95_ms": 30.1960,
+          "latency_p99_ms": 45.6390
+        },
+        {
+          "interval": 14,
+          "elapsed_s": 420,
+          "tps": 10642.3667,
+          "transactions": 319271,
+          "latency_avg_ms": 24.0453,
+          "latency_stddev_ms": 4.7810,
+          "latency_p95_ms": 30.3260,
+          "latency_p99_ms": 45.5430
+        },
+        {
+          "interval": 15,
+          "elapsed_s": 450,
+          "tps": 10596.7667,
+          "transactions": 317903,
+          "latency_avg_ms": 24.1520,
+          "latency_stddev_ms": 4.7332,
+          "latency_p95_ms": 30.4220,
+          "latency_p99_ms": 45.6200
+        },
+        {
+          "interval": 16,
+          "elapsed_s": 480,
+          "tps": 10812.6000,
+          "transactions": 324378,
+          "latency_avg_ms": 23.6800,
+          "latency_stddev_ms": 4.8931,
+          "latency_p95_ms": 30.6820,
+          "latency_p99_ms": 44.6540
+        },
+        {
+          "interval": 17,
+          "elapsed_s": 510,
+          "tps": 10806.5667,
+          "transactions": 324197,
+          "latency_avg_ms": 23.6810,
+          "latency_stddev_ms": 4.8293,
+          "latency_p95_ms": 30.7780,
+          "latency_p99_ms": 44.7570
+        },
+        {
+          "interval": 18,
+          "elapsed_s": 540,
+          "tps": 10847.5333,
+          "transactions": 325426,
+          "latency_avg_ms": 23.5952,
+          "latency_stddev_ms": 4.6639,
+          "latency_p95_ms": 30.0190,
+          "latency_p99_ms": 44.4850
+        },
+        {
+          "interval": 19,
+          "elapsed_s": 570,
+          "tps": 10787.9667,
+          "transactions": 323639,
+          "latency_avg_ms": 23.4045,
+          "latency_stddev_ms": 4.5866,
+          "latency_p95_ms": 29.6440,
+          "latency_p99_ms": 44.1480
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "tps": 11438.8617,
+      "transactions": 6863317,
+      "failed_transactions": 0,
+      "latency_avg_ms": 22.3592,
+      "latency_stddev_ms": 5.0587,
+      "initial_connection_time_ms": 473.036,
+      "latency_p95_ms": 29.6290,
+      "latency_p99_ms": 41.3160,
+      "interval_seconds": 30,
+      "timeseries": [
+        {
+          "interval": 0,
+          "elapsed_s": 0,
+          "tps": 9604.3667,
+          "transactions": 288131,
+          "latency_avg_ms": 26.0098,
+          "latency_stddev_ms": 5.2026,
+          "latency_p95_ms": 32.0440,
+          "latency_p99_ms": 49.9700
+        },
+        {
+          "interval": 1,
+          "elapsed_s": 30,
+          "tps": 9899.2333,
+          "transactions": 296977,
+          "latency_avg_ms": 25.8501,
+          "latency_stddev_ms": 4.8484,
+          "latency_p95_ms": 31.9780,
+          "latency_p99_ms": 49.4020
+        },
+        {
+          "interval": 2,
+          "elapsed_s": 60,
+          "tps": 9930.0000,
+          "transactions": 297900,
+          "latency_avg_ms": 25.7916,
+          "latency_stddev_ms": 4.8255,
+          "latency_p95_ms": 31.8460,
+          "latency_p99_ms": 49.3290
+        },
+        {
+          "interval": 3,
+          "elapsed_s": 90,
+          "tps": 10114.6667,
+          "transactions": 303440,
+          "latency_avg_ms": 25.3036,
+          "latency_stddev_ms": 4.8453,
+          "latency_p95_ms": 31.7050,
+          "latency_p99_ms": 48.1470
+        },
+        {
+          "interval": 4,
+          "elapsed_s": 120,
+          "tps": 10111.1000,
+          "transactions": 303333,
+          "latency_avg_ms": 25.3188,
+          "latency_stddev_ms": 4.7433,
+          "latency_p95_ms": 31.3770,
+          "latency_p99_ms": 48.0370
+        },
+        {
+          "interval": 5,
+          "elapsed_s": 150,
+          "tps": 10362.3667,
+          "transactions": 310871,
+          "latency_avg_ms": 24.6995,
+          "latency_stddev_ms": 4.7870,
+          "latency_p95_ms": 30.8510,
+          "latency_p99_ms": 47.0490
+        },
+        {
+          "interval": 6,
+          "elapsed_s": 180,
+          "tps": 10430.4667,
+          "transactions": 312914,
+          "latency_avg_ms": 24.5417,
+          "latency_stddev_ms": 4.6781,
+          "latency_p95_ms": 30.8990,
+          "latency_p99_ms": 46.2250
+        },
+        {
+          "interval": 7,
+          "elapsed_s": 210,
+          "tps": 11317.6667,
+          "transactions": 339530,
+          "latency_avg_ms": 22.6132,
+          "latency_stddev_ms": 4.7696,
+          "latency_p95_ms": 29.4410,
+          "latency_p99_ms": 42.3430
+        },
+        {
+          "interval": 8,
+          "elapsed_s": 240,
+          "tps": 11760.1000,
+          "transactions": 352803,
+          "latency_avg_ms": 21.7576,
+          "latency_stddev_ms": 4.5388,
+          "latency_p95_ms": 28.2740,
+          "latency_p99_ms": 40.4600
+        },
+        {
+          "interval": 9,
+          "elapsed_s": 270,
+          "tps": 11994.6333,
+          "transactions": 359839,
+          "latency_avg_ms": 21.3460,
+          "latency_stddev_ms": 4.4593,
+          "latency_p95_ms": 28.1310,
+          "latency_p99_ms": 39.7530
+        },
+        {
+          "interval": 10,
+          "elapsed_s": 300,
+          "tps": 12077.2333,
+          "transactions": 362317,
+          "latency_avg_ms": 21.1916,
+          "latency_stddev_ms": 4.3981,
+          "latency_p95_ms": 27.4270,
+          "latency_p99_ms": 39.6000
+        },
+        {
+          "interval": 11,
+          "elapsed_s": 330,
+          "tps": 12125.9667,
+          "transactions": 363779,
+          "latency_avg_ms": 21.1091,
+          "latency_stddev_ms": 4.5543,
+          "latency_p95_ms": 27.9300,
+          "latency_p99_ms": 39.5180
+        },
+        {
+          "interval": 12,
+          "elapsed_s": 360,
+          "tps": 12257.6333,
+          "transactions": 367729,
+          "latency_avg_ms": 20.8812,
+          "latency_stddev_ms": 4.4752,
+          "latency_p95_ms": 27.5920,
+          "latency_p99_ms": 39.0410
+        },
+        {
+          "interval": 13,
+          "elapsed_s": 390,
+          "tps": 12350.4667,
+          "transactions": 370514,
+          "latency_avg_ms": 20.7204,
+          "latency_stddev_ms": 4.4387,
+          "latency_p95_ms": 27.2410,
+          "latency_p99_ms": 38.5890
+        },
+        {
+          "interval": 14,
+          "elapsed_s": 420,
+          "tps": 12396.9000,
+          "transactions": 371907,
+          "latency_avg_ms": 20.6400,
+          "latency_stddev_ms": 4.4172,
+          "latency_p95_ms": 27.2370,
+          "latency_p99_ms": 38.4820
+        },
+        {
+          "interval": 15,
+          "elapsed_s": 450,
+          "tps": 12459.4667,
+          "transactions": 373784,
+          "latency_avg_ms": 20.5493,
+          "latency_stddev_ms": 4.4747,
+          "latency_p95_ms": 27.4280,
+          "latency_p99_ms": 38.3950
+        },
+        {
+          "interval": 16,
+          "elapsed_s": 480,
+          "tps": 12527.7333,
+          "transactions": 375832,
+          "latency_avg_ms": 20.4323,
+          "latency_stddev_ms": 4.5192,
+          "latency_p95_ms": 27.4790,
+          "latency_p99_ms": 38.2140
+        },
+        {
+          "interval": 17,
+          "elapsed_s": 510,
+          "tps": 12200.8667,
+          "transactions": 366026,
+          "latency_avg_ms": 20.9753,
+          "latency_stddev_ms": 4.5024,
+          "latency_p95_ms": 27.5490,
+          "latency_p99_ms": 39.2460
+        },
+        {
+          "interval": 18,
+          "elapsed_s": 540,
+          "tps": 12241.4000,
+          "transactions": 367242,
+          "latency_avg_ms": 20.9147,
+          "latency_stddev_ms": 4.5635,
+          "latency_p95_ms": 27.8250,
+          "latency_p99_ms": 39.0990
+        },
+        {
+          "interval": 19,
+          "elapsed_s": 570,
+          "tps": 12512.9667,
+          "transactions": 375389,
+          "latency_avg_ms": 20.4561,
+          "latency_stddev_ms": 4.3899,
+          "latency_p95_ms": 26.8500,
+          "latency_p99_ms": 38.2750
+        },
+        {
+          "interval": 20,
+          "elapsed_s": 600,
+          "tps": 102.0000,
+          "transactions": 3060,
+          "latency_avg_ms": 21.5731,
+          "latency_stddev_ms": 13.2398,
+          "latency_p95_ms": 32.9890,
+          "latency_p99_ms": 43.5160
+        }
+      ]
+    },
+    {
+      "run": 3,
+      "tps": 12355.4633,
+      "transactions": 7413278,
+      "failed_transactions": 0,
+      "latency_avg_ms": 20.7006,
+      "latency_stddev_ms": 5.4643,
+      "initial_connection_time_ms": 460.421,
+      "latency_p95_ms": 27.3090,
+      "latency_p99_ms": 38.7230,
+      "interval_seconds": 30,
+      "timeseries": [
+        {
+          "interval": 0,
+          "elapsed_s": 0,
+          "tps": 10724.4667,
+          "transactions": 321734,
+          "latency_avg_ms": 23.1417,
+          "latency_stddev_ms": 4.9692,
+          "latency_p95_ms": 29.0930,
+          "latency_p99_ms": 44.6570
+        },
+        {
+          "interval": 1,
+          "elapsed_s": 30,
+          "tps": 11304.5000,
+          "transactions": 339135,
+          "latency_avg_ms": 22.6386,
+          "latency_stddev_ms": 4.5487,
+          "latency_p95_ms": 28.4840,
+          "latency_p99_ms": 43.0730
+        },
+        {
+          "interval": 2,
+          "elapsed_s": 60,
+          "tps": 11544.7000,
+          "transactions": 346341,
+          "latency_avg_ms": 22.1775,
+          "latency_stddev_ms": 4.6010,
+          "latency_p95_ms": 28.1360,
+          "latency_p99_ms": 42.1810
+        },
+        {
+          "interval": 3,
+          "elapsed_s": 90,
+          "tps": 11717.8667,
+          "transactions": 351536,
+          "latency_avg_ms": 21.8415,
+          "latency_stddev_ms": 4.5194,
+          "latency_p95_ms": 27.8690,
+          "latency_p99_ms": 41.1230
+        },
+        {
+          "interval": 4,
+          "elapsed_s": 120,
+          "tps": 11874.2333,
+          "transactions": 356227,
+          "latency_avg_ms": 21.5549,
+          "latency_stddev_ms": 4.5390,
+          "latency_p95_ms": 27.7140,
+          "latency_p99_ms": 40.7220
+        },
+        {
+          "interval": 5,
+          "elapsed_s": 150,
+          "tps": 12165.2333,
+          "transactions": 364957,
+          "latency_avg_ms": 21.0406,
+          "latency_stddev_ms": 4.5386,
+          "latency_p95_ms": 27.3210,
+          "latency_p99_ms": 39.5370
+        },
+        {
+          "interval": 6,
+          "elapsed_s": 180,
+          "tps": 12158.7000,
+          "transactions": 364761,
+          "latency_avg_ms": 21.0537,
+          "latency_stddev_ms": 4.7844,
+          "latency_p95_ms": 27.9030,
+          "latency_p99_ms": 39.3920
+        },
+        {
+          "interval": 7,
+          "elapsed_s": 210,
+          "tps": 12380.6000,
+          "transactions": 371418,
+          "latency_avg_ms": 20.6702,
+          "latency_stddev_ms": 4.6415,
+          "latency_p95_ms": 27.5380,
+          "latency_p99_ms": 38.7720
+        },
+        {
+          "interval": 8,
+          "elapsed_s": 240,
+          "tps": 12563.0000,
+          "transactions": 376890,
+          "latency_avg_ms": 20.3692,
+          "latency_stddev_ms": 4.5162,
+          "latency_p95_ms": 26.8140,
+          "latency_p99_ms": 38.1080
+        },
+        {
+          "interval": 9,
+          "elapsed_s": 270,
+          "tps": 12664.0000,
+          "transactions": 379920,
+          "latency_avg_ms": 20.2148,
+          "latency_stddev_ms": 4.4472,
+          "latency_p95_ms": 26.8520,
+          "latency_p99_ms": 37.5460
+        },
+        {
+          "interval": 10,
+          "elapsed_s": 300,
+          "tps": 12676.7667,
+          "transactions": 380303,
+          "latency_avg_ms": 20.1882,
+          "latency_stddev_ms": 4.4898,
+          "latency_p95_ms": 26.8040,
+          "latency_p99_ms": 37.6480
+        },
+        {
+          "interval": 11,
+          "elapsed_s": 330,
+          "tps": 12676.8000,
+          "transactions": 380304,
+          "latency_avg_ms": 20.1952,
+          "latency_stddev_ms": 4.5383,
+          "latency_p95_ms": 26.8580,
+          "latency_p99_ms": 37.6490
+        },
+        {
+          "interval": 12,
+          "elapsed_s": 360,
+          "tps": 12692.7000,
+          "transactions": 380781,
+          "latency_avg_ms": 20.1640,
+          "latency_stddev_ms": 4.4230,
+          "latency_p95_ms": 26.4970,
+          "latency_p99_ms": 37.8130
+        },
+        {
+          "interval": 13,
+          "elapsed_s": 390,
+          "tps": 12778.5000,
+          "transactions": 383355,
+          "latency_avg_ms": 20.0236,
+          "latency_stddev_ms": 4.5361,
+          "latency_p95_ms": 26.7850,
+          "latency_p99_ms": 37.4270
+        },
+        {
+          "interval": 14,
+          "elapsed_s": 420,
+          "tps": 12531.1667,
+          "transactions": 375935,
+          "latency_avg_ms": 20.4346,
+          "latency_stddev_ms": 13.3916,
+          "latency_p95_ms": 27.0530,
+          "latency_p99_ms": 38.8840
+        },
+        {
+          "interval": 15,
+          "elapsed_s": 450,
+          "tps": 12905.3667,
+          "transactions": 387161,
+          "latency_avg_ms": 19.8266,
+          "latency_stddev_ms": 4.4987,
+          "latency_p95_ms": 26.5250,
+          "latency_p99_ms": 37.0930
+        },
+        {
+          "interval": 16,
+          "elapsed_s": 480,
+          "tps": 12802.7667,
+          "transactions": 384083,
+          "latency_avg_ms": 19.9942,
+          "latency_stddev_ms": 4.5788,
+          "latency_p95_ms": 26.8940,
+          "latency_p99_ms": 37.5050
+        },
+        {
+          "interval": 17,
+          "elapsed_s": 510,
+          "tps": 12855.0000,
+          "transactions": 385650,
+          "latency_avg_ms": 19.9111,
+          "latency_stddev_ms": 4.6315,
+          "latency_p95_ms": 26.9470,
+          "latency_p99_ms": 37.7670
+        },
+        {
+          "interval": 18,
+          "elapsed_s": 540,
+          "tps": 12992.1667,
+          "transactions": 389765,
+          "latency_avg_ms": 19.7030,
+          "latency_stddev_ms": 4.4185,
+          "latency_p95_ms": 26.1660,
+          "latency_p99_ms": 37.1400
+        },
+        {
+          "interval": 19,
+          "elapsed_s": 570,
+          "tps": 12911.6667,
+          "transactions": 387350,
+          "latency_avg_ms": 19.8203,
+          "latency_stddev_ms": 4.5278,
+          "latency_p95_ms": 26.6380,
+          "latency_p99_ms": 37.0070
+        },
+        {
+          "interval": 20,
+          "elapsed_s": 600,
+          "tps": 189.0667,
+          "transactions": 5672,
+          "latency_avg_ms": 21.2159,
+          "latency_stddev_ms": 11.0732,
+          "latency_p95_ms": 27.2640,
+          "latency_p99_ms": 42.7500
+        }
+      ]
+    }
+  ]
+}
