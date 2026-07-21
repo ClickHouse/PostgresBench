@@ -381,6 +381,24 @@
             </td>
         </tr>
         <tr>
+            <th>HA: </th>
+            <td id="selectors_ha">
+                <a id="select-all-ha" class="selector selector-active">All</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Cloud: </th>
+            <td id="selectors_cloud">
+                <a id="select-all-clouds" class="selector selector-active">All</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Region: </th>
+            <td id="selectors_region">
+                <a id="select-all-regions" class="selector selector-active">All</a>
+            </td>
+        </tr>
+        <tr>
             <th>Metric: </th>
             <td id="selectors_run">
                 <a class="selector selector-active" id="selector-metric-tps">TPS</a>
@@ -440,6 +458,9 @@
             "machine": {},
             "data_size": {},
             "postgres_version": {},
+            "ha": {},
+            "cloud": {},
+            "region": {},
             "metric": "tps",
             "run_type": "hot",
             "queries": [],
@@ -468,8 +489,21 @@
         let machines = document.getElementById('selectors_machine');
         let data_sizes = document.getElementById('selectors_data_size');
         let postgres_versions = document.getElementById('selectors_postgres_version');
+        let ha_configs = document.getElementById('selectors_ha');
+        let clouds = document.getElementById('selectors_cloud');
+        let regions = document.getElementById('selectors_region');
+
+        function getCloud(elem) {
+            return elem.cloud ?? 'aws';
+        }
+
+        function getRegion(elem) {
+            return elem.region ?? elem.aws_region ?? 'us-east-2';
+        }
 
         let unique_systems = [... new Set(data.map(elem => elem.system))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+        const multiple_clouds = [...new Set(data.map(elem => getCloud(elem)))].length > 1;
+        const multiple_regions = [...new Set(data.map(elem => getRegion(elem)))].length > 1;
 
         // Helper function to convert scale factor to GB rounded to nearest 100GB
         function scaleFactorToGB(scale_factor) {
@@ -482,6 +516,57 @@
             if (!version_string) return null;
             const match = version_string.match(/^(\d+\.\d+)/);
             return match ? match[1] : version_string;
+        }
+
+        function getHaStandbys(elem) {
+            const ha = elem.ha;
+            if (!ha || ha.mode === 'off') return 0;
+            return ha.standbys ?? 0;
+        }
+
+        function getHaFilterLabel(elem) {
+            const standbys = getHaStandbys(elem);
+            if (standbys === 0) return 'Single node';
+            if (standbys === 1) return 'HA – 1 standby';
+            return `HA – ${standbys} standbys`;
+        }
+
+        function getPrimaryStorage(elem) {
+            return elem.instance?.primary_storage?.trim() ?? null;
+        }
+
+        function formatPrimaryStorageLabel(storage) {
+            if (!storage) return '';
+            return storage.trim().replace(/\s+storage\s*$/i, '');
+        }
+
+        function resultLabelKey(elem) {
+            return [
+                elem.system,
+                elem.machine,
+                String(elem.benchmark?.scale_factor ?? ''),
+                getHaFilterLabel(elem),
+                getCloud(elem),
+                getRegion(elem),
+            ].join('\0');
+        }
+
+        const label_keys_needing_storage = (() => {
+            const by_key = new Map();
+            for (const elem of data) {
+                const storage = getPrimaryStorage(elem);
+                if (!storage) continue;
+                const key = resultLabelKey(elem);
+                if (!by_key.has(key)) by_key.set(key, new Set());
+                by_key.get(key).add(formatPrimaryStorageLabel(storage).toLowerCase());
+            }
+            return new Set([...by_key.entries()].filter(([, storages]) => storages.size > 1).map(([key]) => key));
+        })();
+
+        function getPrimaryStorageSuffix(elem, separator = ', ') {
+            const storage = getPrimaryStorage(elem);
+            if (!storage || !label_keys_needing_storage.has(resultLabelKey(elem))) return '';
+            return `${separator}${formatPrimaryStorageLabel(storage)}`;
         }
 
         function toggle(e, elem, selectors_map) {
@@ -560,10 +645,55 @@
                 selector.addEventListener('click', e => toggle(e, version, selectors.postgres_version));
             });
 
+        const ha_order = ['Single node', 'HA – 1 standby', 'HA – 2 standbys'];
+        const ha_filter_labels = [...new Set(data.map(elem => getHaFilterLabel(elem)))]
+            .sort((a, b) => {
+                const ai = ha_order.indexOf(a), bi = ha_order.indexOf(b);
+                return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+            });
+        // Systems with no single-node runs (e.g. PlanetScale) need their HA mode enabled by default.
+        const ha_only_labels = new Set(
+            [...new Set(data.map(elem => elem.system))]
+                .filter(sys => data.filter(e => e.system === sys).every(e => getHaStandbys(e) > 0))
+                .flatMap(sys => data.filter(e => e.system === sys).map(getHaFilterLabel))
+        );
+        ha_filter_labels.map(label => {
+                let selector = document.createElement('a');
+                const selected = label === 'Single node' || ha_only_labels.has(label);
+                selector.className = selected ? 'selector selector-active' : 'selector';
+                selector.appendChild(document.createTextNode(label));
+                ha_configs.appendChild(selector);
+                selectors.ha[label] = selected;
+                selector.addEventListener('click', e => toggle(e, label, selectors.ha));
+            });
+
+        [...new Set(data.map(elem => getCloud(elem)))].sort().map(cloud => {
+            let selector = document.createElement('a');
+            const selected = cloud === 'aws';
+            selector.className = selected ? 'selector selector-active' : 'selector';
+            selector.appendChild(document.createTextNode(cloud));
+            clouds.appendChild(selector);
+            selectors.cloud[cloud] = selected;
+            selector.addEventListener('click', e => toggle(e, cloud, selectors.cloud));
+        });
+
+        [...new Set(data.map(elem => getRegion(elem)))].sort().map(region => {
+            let selector = document.createElement('a');
+            const selected = region === 'us-east-2';
+            selector.className = selected ? 'selector selector-active' : 'selector';
+            selector.appendChild(document.createTextNode(region));
+            regions.appendChild(selector);
+            selectors.region[region] = selected;
+            selector.addEventListener('click', e => toggle(e, region, selectors.region));
+        });
+
         document.getElementById('select-all-systems').addEventListener('click', e => toggleAll(e, selectors.system));
         document.getElementById('select-all-machines').addEventListener('click', e => toggleAll(e, selectors.machine));
         document.getElementById('select-all-data-sizes').addEventListener('click', e => toggleAll(e, selectors.data_size));
         document.getElementById('select-all-postgres-versions').addEventListener('click', e => toggleAll(e, selectors.postgres_version));
+        document.getElementById('select-all-ha').addEventListener('click', e => toggleAll(e, selectors.ha));
+        document.getElementById('select-all-clouds').addEventListener('click', e => toggleAll(e, selectors.cloud));
+        document.getElementById('select-all-regions').addEventListener('click', e => toggleAll(e, selectors.region));
 
         [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => elem.addEventListener('click', e => {
             [...e.target.parentElement.querySelectorAll('a')].map(elem => { elem.className = elem == e.target ? 'selector selector-active' : 'selector' });
@@ -625,6 +755,18 @@
                 
                 process('system', systems);
                 process('machine', machines);
+                const filtered_ha_labels = new Set(filtered_data.map(elem => getHaFilterLabel(elem)));
+                for (let elem of ha_configs.childNodes) {
+                    if (elem.tagName == 'A') {
+                        if (elem.classList.contains('selector-active') && !filtered_ha_labels.has(elem.innerText)) {
+                            elem.className = 'selector selector-passive';
+                        } else if (elem.classList.contains('selector-passive') && filtered_ha_labels.has(elem.innerText)) {
+                            elem.className = 'selector selector-active';
+                        }
+                    }
+                }
+                process('cloud', clouds);
+                process('region', regions);
         }
 
         function addNote(text) {
@@ -651,14 +793,26 @@
             return 60 + Math.abs(x % 240);
         }
 
-        function buildInstanceTooltip(inst, scale_factor) {
+        function buildInstanceTooltip(inst, scale_factor, cloud, region) {
             let lines = [];
             if (inst.type)         lines.push(`Instance: ${inst.type}`);
             lines.push(`vCPUs:    ${inst.vcpus}`);
             lines.push(`RAM:      ${inst.ram_gb} GB`);
             lines.push(`Instance storage: ${inst.instance_storage ?? 'N/A'}`);
             lines.push(`Primary storage:  ${inst.primary_storage ?? 'N/A'}`);
+            if (cloud)             lines.push(`Cloud:    ${cloud}`);
+            if (region)            lines.push(`Region:   ${region}`);
             if (scale_factor)      lines.push(`Dataset size:     ~${scaleFactorToGB(scale_factor)} GB (scale ${scale_factor})`);
+            return lines.join('\n');
+        }
+
+        function buildHaTooltip(ha) {
+            if (!ha || ha.mode === 'off') return '';
+            let lines = [`HA: ${ha.label}`];
+            if (ha.live_settings?.synchronous_commit)
+                lines.push(`synchronous_commit: ${ha.live_settings.synchronous_commit}`);
+            if (ha.live_settings?.synchronous_standby_names)
+                lines.push(`synchronous_standby_names: ${ha.live_settings.synchronous_standby_names}`);
             return lines.join('\n');
         }
 
@@ -713,6 +867,9 @@
                     elem.className = selectors.data_size[gb_value] ? 'selector selector-active' : 'selector';
                 });
                 [...postgres_versions.childNodes].map(elem => { elem.className = selectors.postgres_version[elem.innerText] ? 'selector selector-active' : 'selector' });
+                [...ha_configs.childNodes].map(elem => { elem.className = selectors.ha[elem.innerText] ? 'selector selector-active' : 'selector' });
+                [...clouds.childNodes].map(elem => { elem.className = selectors.cloud[elem.innerText] ? 'selector selector-active' : 'selector' });
+                [...regions.childNodes].map(elem => { elem.className = selectors.region[elem.innerText] ? 'selector selector-active' : 'selector' });
 
                 [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
                     elem.className = elem.id == 'selector-metric-' + selectors.metric ? 'selector selector-active' : 'selector'
@@ -795,7 +952,12 @@
 
                     let link = document.createElement('a');
                     const dataset_size = elem.benchmark?.scale_factor ? `, ~${scaleFactorToGB(elem.benchmark.scale_factor)} GB` : '';
-                    link.appendChild(document.createTextNode(`${elem.system} (${elem.machine}${dataset_size})`));
+                    const ha_suffix = getHaStandbys(elem) > 0 ? `, ${getHaFilterLabel(elem)}` : '';
+                    const storage_suffix = getPrimaryStorageSuffix(elem);
+                    const location_suffix = (multiple_clouds || multiple_regions)
+                        ? `, ${[multiple_clouds ? getCloud(elem) : null, multiple_regions ? getRegion(elem) : null].filter(Boolean).join(' / ')}`
+                        : '';
+                    link.appendChild(document.createTextNode(`${elem.system} (${elem.machine}${dataset_size}${ha_suffix}${storage_suffix}${location_suffix})`));
                     link.href = "https://github.com/ClickHouse/PostgresBench/blob/main/" + elem.source;
                     link.style.color = `oklch(var(--hashed-link-lightness) 0.2018 ${nameToColor(elem.system.split(' ')[0])})`;
                     note.appendChild(link);
@@ -803,7 +965,10 @@
                     if (elem.instance) {
                         let tooltip = document.createElement('span');
                         tooltip.className = 'tooltip tooltip-result tooltip-instance';
-                        tooltip.appendChild(document.createTextNode(buildInstanceTooltip(elem.instance, elem.benchmark?.scale_factor)));
+                        let tooltip_text = buildInstanceTooltip(elem.instance, elem.benchmark?.scale_factor, getCloud(elem), getRegion(elem));
+                        const ha_tooltip = buildHaTooltip(elem.ha);
+                        if (ha_tooltip) tooltip_text += '\n' + ha_tooltip;
+                        tooltip.appendChild(document.createTextNode(tooltip_text));
                         let footnote = document.createElement('span');
                         footnote.className = 'tooltip-footnote';
                         footnote.appendChild(document.createTextNode('Click to see raw results'));
@@ -888,6 +1053,9 @@
                 elem.className = selectors.data_size[gb_value] ? 'selector selector-active' : 'selector';
             });
             [...postgres_versions.childNodes].map(elem => { elem.className = selectors.postgres_version[elem.innerText] ? 'selector selector-active' : 'selector' });
+            [...ha_configs.childNodes].map(elem => { elem.className = selectors.ha[elem.innerText] ? 'selector selector-active' : 'selector' });
+            [...clouds.childNodes].map(elem => { elem.className = selectors.cloud[elem.innerText] ? 'selector selector-active' : 'selector' });
+            [...regions.childNodes].map(elem => { elem.className = selectors.region[elem.innerText] ? 'selector selector-active' : 'selector' });
 
             [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
                 elem.className = elem.id == 'selector-metric-' + selectors.metric ? 'selector selector-active' : 'selector'
@@ -961,6 +1129,9 @@
                 selectors.system[elem.system] &&
                 selectors.machine[elem.machine] &&
                 selectors.data_size[scaleFactorToGB(elem.benchmark.scale_factor)] &&
+                selectors.ha[getHaFilterLabel(elem)] &&
+                selectors.cloud[getCloud(elem)] &&
+                selectors.region[getRegion(elem)] &&
                 (!elem.postgres_version || selectors.postgres_version[extractVersion(elem.postgres_version)])
             );
 
@@ -995,7 +1166,12 @@
             /// Table header (Systems)
             filtered_data.forEach(elem => {
                 let th = document.createElement('th');
-                th.appendChild(document.createTextNode(`${elem.system}\n(${elem.machine})`));
+                const ha_suffix = getHaStandbys(elem) > 0 ? `\n${getHaFilterLabel(elem)}` : '';
+                const storage_suffix = getPrimaryStorageSuffix(elem, '\n');
+                const location_suffix = (multiple_clouds || multiple_regions)
+                    ? `\n${[multiple_clouds ? getCloud(elem) : null, multiple_regions ? getRegion(elem) : null].filter(Boolean).join(' / ')}`
+                    : '';
+                th.appendChild(document.createTextNode(`${elem.system}\n(${elem.machine})${ha_suffix}${storage_suffix}${location_suffix}`));
                 th.className = 'th-entry';
                 th.dataset.system = elem.system;
                 details_head.appendChild(th);
@@ -1040,6 +1216,8 @@
                         'tps': 'TPS',
                         'latency_avg': 'Avg Latency',
                         'latency_stddev': 'Lat StdDev',
+                        'latency_p95': 'P95 Latency',
+                        'latency_p99': 'P99 Latency',
                         'failed_transactions': 'Failed Tx',
                         'load_time': 'Load Time'
                     }[run_metric_name];
@@ -1051,6 +1229,8 @@
                                 if (run_metric_name === 'tps') return r.tps.toFixed(2);
                                 if (run_metric_name === 'latency_avg') return `${r.latency_avg_ms.toFixed(3)} ms`;
                                 if (run_metric_name === 'latency_stddev') return `${r.latency_stddev_ms.toFixed(3)} ms`;
+                                if (run_metric_name === 'latency_p95') return `${r.latency_p95_ms.toFixed(3)} ms`;
+                                if (run_metric_name === 'latency_p99') return `${r.latency_p99_ms.toFixed(3)} ms`;
                                 if (run_metric_name === 'failed_transactions') return r.failed_transactions;
                             }
                             return '-';
