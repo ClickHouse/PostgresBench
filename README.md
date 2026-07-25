@@ -95,7 +95,7 @@ export VCPUS=16
 export RAM_GB=64
 
 # Optional: instance metadata
-export SYSTEM_NAME="Postgres by ClickHouse"
+export SYSTEM_NAME="ClickHouse Managed Postgres"
 export INSTANCE_TYPE="m8gd.4xlarge"       # instance type identifier
 export INSTANCE_STORAGE="950 GB - NVMe"  # local/instance storage; leave empty for N/A
 export PRIMARY_STORAGE="NVMe"            # primary storage description; leave empty for N/A
@@ -210,7 +210,7 @@ We highly welcome additions of new entries in the benchmark! Please don't hesita
 
 We welcome all types of databases, including open-source and closed-source, commercial and experimental, distributed or embedded, except one-off customized builds for the benchmark.
 
-- [x] Postgres by ClickHouse
+- [x] ClickHouse Managed Postgres
 - [x] AWS RDS
 - [x] AWS Aurora
 - [x] Neon

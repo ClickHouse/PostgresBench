@@ -22,7 +22,7 @@ set -euo pipefail
 ############################
 # Config (edit as needed)
 ############################
-SYSTEM_NAME=${SYSTEM_NAME:-"Postgres by ClickHouse ☁️ (aws)"}
+SYSTEM_NAME=${SYSTEM_NAME:-"ClickHouse Managed Postgres ☁️ (aws)"}
 INSTANCE_TYPE=${INSTANCE_TYPE:-"m6id.4xlarge"}   # e.g. "m6id.4xlarge", "Serverless"
 VCPUS=${VCPUS:?VCPUS is required (e.g. VCPUS=16)}
 RAM_GB=${RAM_GB:?RAM_GB is required (e.g. RAM_GB=64)}
