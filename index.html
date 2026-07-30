@@ -679,7 +679,7 @@
 
         [...new Set(data.map(elem => getRegion(elem)))].sort().map(region => {
             let selector = document.createElement('a');
-            const selected = region === 'us-east-2';
+            const selected = true;
             selector.className = selected ? 'selector selector-active' : 'selector';
             selector.appendChild(document.createTextNode(region));
             regions.appendChild(selector);
