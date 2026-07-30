@@ -1,5 +1,5 @@
 {
-  "system": "Postgres by ClickHouse",
+  "system": "ClickHouse Managed Postgres",
   "date": "2026-07-27",
   "instance": {
     "type": "r8gd.xlarge",
