@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PostgresBench — A Reproducible Benchmark for Postgres Services</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -96,8 +97,28 @@
             color: var(--title-color);
         }
 
+        .title-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding-right: 3.5rem;
+        }
+
+        .title-row h1 {
+            margin: 0.4rem 0;
+        }
+
+        .header-links {
+            line-height: 1.7;
+        }
+
         table {
             border-spacing: 1px;
+        }
+
+        table.comparison {
+            width: 100%;
         }
 
         .stick-left {
@@ -200,20 +221,8 @@
             font-weight: bold;
         }
 
-        .comparison {
-            margin-left: -3%;
-            margin-right: -3%;
-            padding-left: 3%;
-            padding-right: 3%;
-        }
-
         #details {
             padding-bottom: 1rem;
-            width: 100vw;
-            margin-left: -3%;
-            padding-left: 3%;
-            padding-right: 3%;
-            box-sizing: border-box;
         }
 
         #details th {
@@ -226,6 +235,27 @@
             font-family: monospace;
             text-align: right;
             padding: 0.1rem 0.5rem 0.1rem 0.5rem;
+        }
+
+        /* Keep the metric/run label visible while the details table is
+           scrolled horizontally (same pattern as ClickBench). */
+        #details .details-query {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            background-color: var(--background-color);
+            outline: 1px solid var(--background-color);
+            text-align: left;
+        }
+
+        #details .details-query::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            bottom: -1px;
+            right: 100%;
+            width: 100vw;
+            background-color: var(--background-color);
         }
 
         .shadow:hover {
@@ -344,6 +374,124 @@
             font-size: 80%;
             filter: contrast(10%);
         }
+
+        @media (max-width: 800px) {
+            body {
+                padding: 0.75rem 4% 0 4%;
+            }
+
+            .title-row {
+                padding-right: 2.75rem;
+            }
+
+            h1 {
+                font-size: 1.35rem;
+                line-height: 1.25;
+            }
+
+            .themes {
+                font-size: 160%;
+            }
+
+            .selectors-container,
+            .selectors-container tbody,
+            .selectors-container tr,
+            .selectors-container th,
+            .selectors-container td {
+                display: block;
+            }
+
+            .selectors-container {
+                width: 100%;
+                padding: 1rem 0;
+            }
+
+            .selectors-container th {
+                padding-top: 0.85rem;
+                padding-bottom: 0.15rem;
+                padding-right: 0;
+            }
+
+            .selectors-container tr:first-child th {
+                padding-top: 0;
+            }
+
+            table.comparison,
+            table.comparison thead,
+            table.comparison tbody {
+                display: block;
+                width: 100%;
+            }
+
+            table.comparison thead tr {
+                display: block;
+            }
+
+            table.comparison thead .summary-name {
+                display: none;
+            }
+
+            table.comparison thead th[colspan] {
+                display: block;
+                text-align: left;
+                padding-bottom: 0.75rem;
+            }
+
+            #summary .summary-row {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-areas:
+                    "name name"
+                    "bar number";
+                align-items: center;
+                column-gap: 0.5rem;
+                row-gap: 0.2rem;
+                padding: 0.45rem 0.4rem;
+            }
+
+            #summary .summary-name {
+                grid-area: name;
+                white-space: normal;
+                text-align: left;
+                padding-right: 0;
+            }
+
+            .summary-colon {
+                display: none;
+            }
+
+            #summary .summary-bar-cell {
+                grid-area: bar;
+                width: auto;
+                min-width: 0;
+            }
+
+            #summary .summary-number {
+                grid-area: number;
+                padding-left: 0;
+            }
+
+            .tooltip-result,
+            .tooltip-instance,
+            .tooltip-query {
+                width: min(20rem, calc(100vw - 2rem));
+                max-width: calc(100vw - 2rem);
+                left: 0;
+                margin-left: 0;
+                transform: none;
+            }
+
+            .tooltip-result::after,
+            .tooltip-instance::after,
+            .tooltip-query::after {
+                left: 1.25rem;
+                margin-left: 0;
+            }
+
+            #nothing-selected {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 
@@ -351,8 +499,15 @@
 
     <div class="header stick-left">
         <span class="nowrap themes"><span id="toggle-dark">🌚</span><span id="toggle-light">🌞</span></span>
-        <h1>PostgresBench — A Reproducible Benchmark for Postgres Services</h1>
-        <a href="https://github.com/ClickHouse/PostgresBench/">Methodology</a> | <a href="https://github.com/ClickHouse/PostgresBench/">Reproduce and Validate the Results</a> | <a href="https://github.com/ClickHouse/PostgresBench/">Add a System</a> | See also: <a href="https://benchmark.clickhouse.com/">ClickBench</a>
+        <div class="title-row">
+            <h1>PostgresBench — A Reproducible Benchmark for Postgres Services</h1>
+        </div>
+        <p class="header-links">
+            <a href="https://github.com/ClickHouse/PostgresBench/">Methodology</a> |
+            <a href="https://github.com/ClickHouse/PostgresBench/">Reproduce and Validate the Results</a> |
+            <a href="https://github.com/ClickHouse/PostgresBench/">Add a System</a> |
+            See also: <a href="https://benchmark.clickhouse.com/">ClickBench</a>
+        </p>
     </div>
 
     <table class="selectors-container stick-left">
@@ -982,7 +1137,10 @@
                 }
 
                 if (elem.comment) { td_name.appendChild(addNote(elem.comment)); }
-                td_name.appendChild(document.createTextNode(': '));
+                let colon = document.createElement('span');
+                colon.className = 'summary-colon';
+                colon.appendChild(document.createTextNode(': '));
+                td_name.appendChild(colon);
 
                 const percentage = (max_value_in_set > 0) ? (val / max_value_in_set * 100) : 0;
 
@@ -1146,10 +1304,14 @@
             if (filtered_data.length == 0) {
                 nothing_selected_elem.style.display = 'block';
                 [...document.querySelectorAll('.comparison')].map(e => e.style.display = 'none');
+                document.getElementById('details').style.display = 'none';
                 return;
             }
             nothing_selected_elem.style.display = 'none';
-            [...document.querySelectorAll('.comparison')].map(e => e.style.display = 'block');
+            [...document.querySelectorAll('.comparison')].map(e => {
+                e.style.display = e.tagName === 'TABLE' ? 'table' : 'block';
+            });
+            document.getElementById('details').style.display = 'table';
 
             // renderSummary returns the sorted data now
             filtered_data = renderSummary(filtered_data);
@@ -1159,6 +1321,7 @@
             // Header for details
             {
                 let th_empty = document.createElement('th');
+                th_empty.className = 'details-query';
                 th_empty.appendChild(document.createTextNode("Metric / Run"));
                 details_head.appendChild(th_empty);
             }
@@ -1182,6 +1345,7 @@
                 let tr = document.createElement('tr');
                 tr.className = 'shadow';
                 let td_title = document.createElement('td');
+                td_title.className = 'details-query';
                 td_title.appendChild(document.createTextNode(title));
                 tr.appendChild(td_title);
 
